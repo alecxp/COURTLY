@@ -9,6 +9,6 @@ export default function manifest(): MetadataRoute.Manifest {
     display: 'standalone',
     background_color: '#090e18',
     theme_color: '#101a29',
-    icons: [{ src: '/courtly-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }]
+    icons: [{ src: '/courtly-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }]
   };
 }
