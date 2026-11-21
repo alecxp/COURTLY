@@ -43,7 +43,7 @@ export default function TeamsPage() {
           if (!sharedTeam) throw new Error('Squadra non trovata nel database.');
           const { data: roster, error: rosterError } = await supabase.from('team_members').select('id,user_id,role,profiles(nickname)').eq('team_id', teamId);
           if (rosterError) throw rosterError;
-          const members = (roster || []).map((row: any) => ({ id: row.id, nickname: row.profiles?.nickname || 'Utente', role: row.role === 'coach' || row.role === 'admin' ? 'Coach' : 'Player' }));
+          const members: Member[] = (roster || []).map((row: any) => ({ id: row.id, nickname: row.profiles?.nickname || 'Utente', role: (row.role === 'coach' || row.role === 'admin' ? 'Coach' : 'Player') as Member['role'] }));
           setTeam({ name: sharedTeam.name, category: sharedTeam.category || 'Open', season: sharedTeam.season || '2026/27', members });
         } catch (err) {
           setTeam(seed);
