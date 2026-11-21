@@ -1,0 +1,47 @@
+'use client';
+import Link from 'next/link';
+import { getSharedContext } from '../../lib/shared-events';
+import { useEffect, useMemo, useState } from 'react';
+
+type Notification = { id: string; category: 'team' | 'training' | 'game' | 'convocation' | 'basket'; title: string; body: string; time: string; unread: boolean; href: string };
+const initial: Notification[] = [
+  { id: 'n1', category: 'training', title: 'Nuovo allenamento programmato', body: 'Il coach ha aggiunto un allenamento per mercoledì alle 19:30. Conferma la tua presenza.', time: '10 min fa', unread: true, href: '/trainings' },
+  { id: 'n2', category: 'convocation', title: 'Convocazione da confermare', body: 'È disponibile una convocazione. Controlla i dettagli e conferma la tua risposta.', time: '1 ora fa', unread: true, href: '/trainings' },
+  { id: 'n3', category: 'game', title: 'Dettagli partita aggiornati', body: 'Sono stati aggiornati orario di ritrovo e luogo della prossima partita della squadra.', time: 'Ieri', unread: true, href: '/calendar' },
+  { id: 'n4', category: 'basket', title: 'Le prossime partite di Pro Basket', body: 'Consulta il calendario della Serie A maschile e della Serie A1 femminile.', time: 'Ieri', unread: false, href: '/pro-basket' },
+  { id: 'n5', category: 'team', title: 'Benvenuto nella squadra', body: 'Il tuo profilo COURTLY è pronto. Completa le informazioni e tieni sotto controllo la stagione.', time: '3 giorni fa', unread: false, href: '/teams' },
+];
+const icon: Record<Notification['category'], string> = { training: '▣', convocation: '☑', game: '🏀', basket: '🏆', team: '♟' };
+const label: Record<Notification['category'], string> = { training: 'Allenamenti', convocation: 'Convocazioni', game: 'Partite squadra', basket: 'Pro Basket', team: 'Squadra' };
+
+export default function NotificationsPage() {
+  const [items, setItems] = useState(initial);
+  const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [loaded, setLoaded] = useState(false);
+  const [sharedMode, setSharedMode] = useState(false);
+  const [syncNotice, setSyncNotice] = useState('');
+  const [reminders, setReminders] = useState(true);
+  const [basketAlerts, setBasketAlerts] = useState(true);
+  useEffect(() => {
+    let active=true;
+    const load=async()=>{try{const prefs=localStorage.getItem('courtly-notification-prefs');if(prefs){const p=JSON.parse(prefs);setReminders(p.reminders??true);setBasketAlerts(p.basketAlerts??true);}const ctx=await getSharedContext();if(ctx){const {data,error}=await ctx.supabase.from('team_notifications').select('id,category,title,body,href,created_at,read_at').eq('user_id',ctx.userId).order('created_at',{ascending:false}).limit(50);if(error)throw error;const sharedItems=(data||[]).map((n:any)=>({id:n.id,category:n.category as Notification['category'],title:n.title,body:n.body,time:new Date(n.created_at).toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'}),unread:!n.read_at,href:n.href||'/'}));if(active){setItems(sharedItems);setSharedMode(true);setSyncNotice('Notifiche sincronizzate con la squadra.');}}else{const saved=localStorage.getItem('courtly-notifications');if(saved){const parsed=JSON.parse(saved);if(active&&Array.isArray(parsed))setItems(parsed);}if(active){setSharedMode(false);setSyncNotice('Notifiche locali: non vengono condivise tra dispositivi.');}}}catch{if(active){setSharedMode(true);setItems([]);setSyncNotice('Notifiche online non disponibili. Nessun dato locale mostrato come condiviso.');}}finally{if(active)setLoaded(true)}};void load();
+    const onNewNotification=(event:Event)=>{const detail=(event as CustomEvent<Notification>).detail;if(detail?.id&&!localStorage.getItem('courtly_shared_team_id'))setItems(current=>[detail,...current.filter(n=>n.id!==detail.id)].slice(0,50));};
+    const onStorage=(event:StorageEvent)=>{if(event.key==='courtly-notifications'&&event.newValue&&!sharedMode){try{setItems(JSON.parse(event.newValue));}catch{}}};
+    window.addEventListener('courtly-notification',onNewNotification);window.addEventListener('storage',onStorage);
+    return()=>{active=false;window.removeEventListener('courtly-notification',onNewNotification);window.removeEventListener('storage',onStorage);};
+  }, []);
+  useEffect(() => { if (loaded && !sharedMode) try { localStorage.setItem('courtly-notifications', JSON.stringify(items)); } catch {} }, [items, loaded, sharedMode]);
+  useEffect(() => { if (loaded) try { localStorage.setItem('courtly-notification-prefs', JSON.stringify({ reminders, basketAlerts })); } catch {} }, [reminders, basketAlerts, loaded]);
+  const unread = items.filter(x => x.unread).length;
+  const visible = useMemo(() => items.filter(x => filter === 'all' || x.unread), [items, filter]);
+  const markAll = async () => { if(sharedMode){const ctx=await getSharedContext();if(ctx){const {error}=await ctx.supabase.from('team_notifications').update({read_at:new Date().toISOString()}).eq('user_id',ctx.userId).is('read_at',null);if(error){setSyncNotice(`Aggiornamento lettura fallito: ${error.message}`);return;}}}setItems(v=>v.map(x=>({...x,unread:false})));};
+  const clearAll = async () => { if(sharedMode){const ctx=await getSharedContext();if(ctx){const {error}=await ctx.supabase.from('team_notifications').delete().eq('user_id',ctx.userId);if(error){setSyncNotice(`Eliminazione notifiche fallita: ${error.message}`);return;}}}setItems([]);};
+  const markOne = async (id: string) => { if(sharedMode){const ctx=await getSharedContext();if(ctx){const {error}=await ctx.supabase.from('team_notifications').update({read_at:new Date().toISOString()}).eq('id',id).eq('user_id',ctx.userId);if(error){setSyncNotice(`Aggiornamento lettura fallito: ${error.message}`);return;}}}setItems(v=>v.map(x=>x.id===id?{...x,unread:false}:x));};
+  return <main className="shell"><aside className="sidebar"><div className="brand"><span className="brand-mark">C</span> COURTLY</div><div className="team-switch">U18 · Stagione 2026/27</div><nav><Link href="/">◈ Panoramica</Link><Link href="/trainings">▣ Allenamenti</Link><Link href="/teams">♟ Squadra & membri</Link><Link href="/coach">◉ Area coach</Link><Link href="/pro-basket">🏀 Pro Basket</Link><Link href="/calendar">▦ Calendario</Link><Link href="/notifications" className="active">♧ Notifiche</Link></nav><div className="profile"><div className="avatar">LM</div><div><b>Leo M.</b><small>Giocatore</small></div></div></aside>
+  <section className="content notifications-content"><header className="topbar"><span>COURTLY / Notifiche</span><span className="notification">♧ <b>{unread}</b></span></header>
+    {syncNotice&&<p className="muted" role="status">{syncNotice}</p>}<div className="notifications-hero"><div><p className="eyebrow">CENTRO NOTIFICHE</p><h1>Tutto sotto<br/><span>controllo.</span></h1><p>Le novità della tua squadra e gli aggiornamenti sul basket, in un unico posto.</p></div><div className="notifications-hero-icon">♧</div></div>
+    <div className="notifications-toolbar"><div className="notifications-tabs"><button className={filter==='all'?'active':''} onClick={()=>setFilter('all')}>Tutte <span>{items.length}</span></button><button className={filter==='unread'?'active':''} onClick={()=>setFilter('unread')}>Da leggere <span>{unread}</span></button></div><button className="mark-all" onClick={markAll} disabled={!unread}>Segna tutte come lette</button><button className="mark-all" onClick={clearAll} disabled={!items.length}>Svuota</button></div>
+    <div className="notifications-list">{visible.length ? visible.map(n=><article className={`notification-card ${n.unread?'unread':''}`} key={n.id}><div className={`notification-icon ni-${n.category}`}>{icon[n.category]}</div><div className="notification-body"><div className="notification-meta"><span>{label[n.category]}</span><time>{n.time}</time></div><h3>{n.title}</h3><p>{n.body}</p><div className="notification-actions"><Link href={n.href} onClick={()=>markOne(n.id)}>Apri <span>→</span></Link>{n.unread&&<button onClick={()=>markOne(n.id)}>Segna come letta</button>}</div></div>{n.unread&&<span className="unread-dot" aria-label="Non letta"/>}</article>) : <div className="notifications-empty"><div>✓</div><h3>Sei aggiornato!</h3><p>Non ci sono notifiche da leggere.</p></div>}</div>
+    <section className="notification-settings"><div className="settings-heading"><div><h2>Preferenze notifiche</h2><p>Personalizza gli aggiornamenti che vuoi ricevere.</p></div><span>⚙</span></div><div className="notification-setting"><div><b>Squadra e allenamenti</b><small>Allenamenti, convocazioni e modifiche agli eventi</small></div><button className={`toggle ${reminders?'on':''}`} aria-pressed={reminders} onClick={()=>setReminders(v=>!v)}><span/></button></div><div className="notification-setting"><div><b>Pro Basket</b><small>Promemoria per le partite che hai salvato</small></div><button className={`toggle ${basketAlerts?'on':''}`} aria-pressed={basketAlerts} onClick={()=>setBasketAlerts(v=>!v)}><span/></button></div><p className="settings-note">Le preferenze sono salvate su questo dispositivo. Le notifiche push restano da implementare.</p></section>
+    <footer>COURTLY <span>PLAY TOGETHER.</span></footer></section></main>;
+}

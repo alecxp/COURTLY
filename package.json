@@ -1,0 +1,30 @@
+{
+  "name": "courtly-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint app lib",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck",
+    "qa:static": "node scripts/qa-static.mjs",
+    "qa:syntax": "node scripts/qa-syntax.mjs",
+    "env:check": "node scripts/check-env.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "next": "^15.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "typescript": "^5.8.2",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^15.2.0"
+  }
+}
