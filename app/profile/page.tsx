@@ -42,6 +42,22 @@ export default function ProfilePage() {
       localStorage.setItem('courtly_demo_nickname', cleanNickname);
       localStorage.setItem('courtly_demo_team_name', cleanTeam);
       localStorage.setItem('courtly_demo_team_role', teamRole.trim());
+      // Keep the selected field position connected to the local roster.
+      const rosterKey = 'courtly-team-demo-v1';
+      const rosterRaw = localStorage.getItem(rosterKey);
+      if (rosterRaw) {
+        const roster = JSON.parse(rosterRaw);
+        if (roster && Array.isArray(roster.members)) {
+          const existing = roster.members.find((member: any) => member.nickname?.trim().toLowerCase() === cleanNickname.toLowerCase());
+          if (existing) {
+            existing.position = teamRole.trim();
+            roster.members = roster.members.map((member: any) => member.nickname?.trim().toLowerCase() === cleanNickname.toLowerCase() ? existing : member);
+          } else if (cleanTeam) {
+            roster.members.push({ id: 'current-user-profile', nickname: cleanNickname, role: 'Player', position: teamRole.trim() });
+          }
+          localStorage.setItem(rosterKey, JSON.stringify(roster));
+        }
+      }
     } catch {
       setNotice('Salvataggio locale non disponibile nel browser.');
       return;
