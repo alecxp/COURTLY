@@ -7,6 +7,7 @@ export default function ProfilePage() {
   const [nickname, setNickname] = useState('');
   const [teamName, setTeamName] = useState('');
   const [role, setRole] = useState('Giocatore');
+  const [teamRole, setTeamRole] = useState('');
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -15,6 +16,7 @@ export default function ProfilePage() {
       setNickname(localStorage.getItem('courtly_demo_nickname') || '');
       setTeamName(localStorage.getItem('courtly_demo_team_name') || '');
       setRole(localStorage.getItem('courtly_demo_role') === 'coach' ? 'Coach' : 'Giocatore');
+      setTeamRole(localStorage.getItem('courtly_demo_team_role') || '');
     } catch {
       setNotice('Non è stato possibile leggere il profilo da questo dispositivo.');
     } finally {
@@ -39,12 +41,14 @@ export default function ProfilePage() {
     try {
       localStorage.setItem('courtly_demo_nickname', cleanNickname);
       localStorage.setItem('courtly_demo_team_name', cleanTeam);
+      localStorage.setItem('courtly_demo_team_role', teamRole.trim());
     } catch {
       setNotice('Salvataggio locale non disponibile nel browser.');
       return;
     }
     setNickname(cleanNickname);
     setTeamName(cleanTeam);
+    setTeamRole(teamRole.trim());
     setNotice('Profilo aggiornato.');
   }
 
@@ -55,7 +59,8 @@ export default function ProfilePage() {
     <form onSubmit={save}>
       <label>Nickname<input value={nickname} onChange={e => setNickname(e.target.value)} minLength={3} maxLength={20} required /></label>
       <label>Squadra<input value={teamName} onChange={e => setTeamName(e.target.value)} maxLength={40} /></label>
-      <label>Ruolo<input value={role} readOnly /></label>
+      <label>Accesso<input value={role} readOnly /></label>
+      <label>Ruolo in campo<select value={teamRole} onChange={e => setTeamRole(e.target.value)}><option value="">Seleziona il tuo ruolo</option><option>Playmaker</option><option>Guardia</option><option>Ala</option><option>Ala grande</option><option>Centro</option><option>Altro</option></select></label>
       <button className="btn-primary" type="submit">Salva profilo</button>
     </form>
     {notice && <div className="auth-message" role="status">{notice}</div>}
