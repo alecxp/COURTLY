@@ -13,6 +13,7 @@ export default function MobileNav() {
     <Link href="/calendar" aria-label="Calendario"><span>▦</span><small>Calendario</small></Link>
     <Link href="/statistics" aria-label="Statistiche"><span>▥</span><small>Stats</small></Link>
     <Link href="/pro-basket" aria-label="Pro Basket"><span>🏀</span><small>Pro Basket</small></Link>
+    <Link href="/profile" aria-label="Profilo"><span>👤</span><small>Profilo</small></Link>
     <Link href="/notifications" aria-label="Notifiche"><span>♧</span><small>Notifiche</small></Link>
   </nav>;
 }
