@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase/client';
 
-type Member = { id: string; nickname: string; role: 'Player' | 'Coach' };
+type Member = { id: string; nickname: string; role: 'Player' | 'Coach'; position?: string };
 type Team = { name: string; category: string; season: string; members: Member[] };
 const KEY = 'courtly-team-demo-v1';
 const seed: Team = { name: 'Squadra non configurata', category: 'Categoria da definire', season: 'Stagione da definire', members: [] };
@@ -23,6 +23,7 @@ export default function TeamsPage() {
   useEffect(() => {
     const enteredNickname = localStorage.getItem('courtly_demo_nickname')?.trim() || '';
     const enteredRole = localStorage.getItem('courtly_demo_role') === 'coach' ? 'Coach' : 'Player';
+    const savedPosition = localStorage.getItem('courtly_demo_team_role') || '';
     setCurrentNickname(enteredNickname);
     setIsCoach(enteredRole === 'Coach');
 
@@ -68,7 +69,7 @@ export default function TeamsPage() {
       } else {
         const enteredTeam = localStorage.getItem('courtly_demo_team_name')?.trim();
         if (enteredTeam) setTeam(t => ({ ...t, name: enteredTeam }));
-        if (enteredNickname) setTeam(t => ({ ...t, members: [{ id: 'current-user', nickname: enteredNickname, role: enteredRole }] }));
+        if (enteredNickname) setTeam(t => ({ ...t, members: [{ id: 'current-user', nickname: enteredNickname, role: enteredRole, position: enteredRole === 'Player' ? savedPosition : undefined }] }));
       }
     } catch {}
     setReady(true);
@@ -107,7 +108,7 @@ export default function TeamsPage() {
       <div className="team-main-card"><div className="team-emblem">🏀</div><div className="team-main-details"><span className="eyebrow">SQUADRA ATTIVA</span><h2>{team.name}</h2><p>{team.category} · Stagione {team.season}</p></div>{isCoach && !isSupabaseConfigured && <button className="btn-primary team-create" onClick={() => setCreateOpen(v => !v)}>{createOpen ? 'Chiudi' : '＋ Crea squadra demo'}</button>}</div>
       {!team.members.length && <p className="muted">Nessun membro registrato. In questa versione demo, i dati della squadra sono salvati solo su questo dispositivo.</p>}<div className="team-metrics"><div><small>Membri</small><strong>{team.members.length}</strong></div><div><small>Giocatori</small><strong>{players}</strong></div><div><small>Coach</small><strong>{coaches}</strong></div></div>
       {isCoach && !isSupabaseConfigured && createOpen && <div className="team-panel"><h3>Nuova squadra</h3><div className="team-form"><label>Nome squadra<input value={name} onChange={e => setName(e.target.value)} placeholder="es. U17 Eagles"/></label><label>Categoria<input value={category} onChange={e => setCategory(e.target.value)} placeholder="Under 17"/></label><label>Stagione<input value={season} onChange={e => setSeason(e.target.value)}/></label><button className="btn-primary" onClick={createTeam}>Crea squadra</button></div></div>}
-      <div className="team-columns"><div className="team-panel roster-panel"><div className="panel-title"><div><h2>Roster</h2><p className="muted">Membri della squadra</p></div><span className="roster-count">{team.members.length}</span></div><div className="member-list">{team.members.map(m => <div className="member-row" key={m.id}><div className="member-avatar">{m.nickname.slice(0, 2).toUpperCase()}</div><div className="member-text"><b>{m.nickname}</b><small>{m.role === 'Coach' ? 'Staff tecnico' : 'Giocatore'}</small></div><span className={`member-role ${m.role === 'Coach' ? 'coach-role' : ''}`}>{m.role.toUpperCase()}</span>{isCoach && <button className="remove-member" title="Rimuovi membro (demo)" onClick={() => removeMember(m.id)}>−</button>}</div>)}</div></div>
+      <div className="team-columns"><div className="team-panel roster-panel"><div className="panel-title"><div><h2>Roster</h2><p className="muted">Membri della squadra</p></div><span className="roster-count">{team.members.length}</span></div><div className="member-list">{team.members.map(m => <div className="member-row" key={m.id}><div className="member-avatar">{m.nickname.slice(0, 2).toUpperCase()}</div><div className="member-text"><b>{m.nickname}</b><small>{m.role === 'Coach' ? 'Staff tecnico' : 'Giocatore'}{m.position ? ` · ${m.position}` : ''}</small></div><span className={`member-role ${m.role === 'Coach' ? 'coach-role' : ''}`}>{m.role.toUpperCase()}</span>{isCoach && <button className="remove-member" title="Rimuovi membro (demo)" onClick={() => removeMember(m.id)}>−</button>}</div>)}</div></div>
         {isCoach && <div className="team-panel invite-panel"><h2>Ingresso giocatori</h2><p className="muted">{isSupabaseConfigured ? 'I giocatori entrano scegliendo il ruolo Giocatore e scrivendo esattamente il nome della squadra. La membership viene registrata nel database condiviso.' : 'Nella demo locale, il roster esiste solo su questo dispositivo.'}</p>{!isSupabaseConfigured && <div className="join-form"><label>Nickname<input value={nickname} onChange={e => setNickname(e.target.value)} placeholder="Nickname del giocatore"/></label><label>Nome squadra<input value={joinTeamName} onChange={e => setJoinTeamName(e.target.value)} placeholder="Scrivi il nome della squadra"/></label><button className="btn-primary" onClick={addPlayer}>Aggiungi al roster demo</button></div>}<div className="invite-note">{isSupabaseConfigured ? 'Roster online condiviso tramite Supabase.' : 'Demo locale: per la sincronizzazione tra dispositivi configura Supabase.'}</div></div>}
       </div>
       <div className="team-panel team-rules"><h3>Ruoli</h3><div className="role-explainer"><div><span className="role-dot player-dot"/><b>Giocatore</b><p>Risponde agli allenamenti e comunica disponibilità.</p></div><div><span className="role-dot coach-dot"/><b>Coach</b><p>Gestisce roster, allenamenti, partite e convocazioni.</p></div></div></div>
