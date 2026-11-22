@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { addCourtlyNotification, addSharedTeamNotification } from '../../lib/courtly-notifications';
 import { getSharedContext, loadSharedEvents, toLocalDateTime, splitLocalDateTime, eventDateTime } from '../../lib/shared-events';
 
@@ -9,6 +10,7 @@ type Training = { id: string; title: string; date: string; time: string; locatio
 const initial: Training[] = [];
 const labels: Record<Status, string> = { pending: 'In attesa', present: 'Presente', absent: 'Assente' };
 export default function TrainingsPage() {
+  const router = useRouter();
   const [trainings, setTrainings] = useState<Training[]>(initial);
   const [selected, setSelected] = useState('');
   const [isCoach, setIsCoach] = useState(false);
@@ -31,7 +33,7 @@ export default function TrainingsPage() {
   const create = async (e: FormEvent) => { e.preventDefault(); const ctx = await getSharedContext(); let item: Training = { ...form, id: `t-${Date.now()}`, responses: {} }; if (ctx) { const { data, error } = await ctx.supabase.from('events').insert({ team_id: ctx.teamId, event_type: 'training', title: form.title, starts_at: eventDateTime(form.date, form.time), venue: form.location || null, notes: form.note || null, response_deadline: form.deadline ? new Date(form.deadline).toISOString() : null, created_by: ctx.userId }).select().single(); if (error) { setSyncNotice(`Creazione online fallita: ${error.message}`); return; } item = { ...item, id: data.id }; setOnlineTeam(true); setSyncNotice('Allenamento creato e condiviso con la squadra.'); } setTrainings(prev => [item, ...prev]); setSelected(item.id); addCourtlyNotification({ category: 'training', title: 'Nuovo allenamento', body: `${item.title} · ${new Date(`${item.date}T12:00:00`).toLocaleDateString('it-IT')} alle ${item.time}${item.location ? ` · ${item.location}` : ''}`, href: '/trainings' });void addSharedTeamNotification({ category: 'training', title: 'Nuovo allenamento', body: `${item.title} · ${new Date(`${item.date}T12:00:00`).toLocaleDateString('it-IT')} alle ${item.time}${item.location ? ` · ${item.location}` : ''}`, href: '/trainings' }); setShowCreate(false); setForm({ title: '', date: '', time: '19:30', location: '', note: '', deadline: '' }); };
   const reset = () => { setTrainings([]); setSelected(''); localStorage.removeItem('courtly-trainings-v1'); };
   return <main className="shell coach-shell"><section className="content trainings-content">
-    <header className="topbar"><Link href="/dashboard">← Dashboard</Link><span className="role-label">{isCoach ? 'AREA COACH' : 'AREA GIOCATORE'}</span></header>
+    <header className="topbar"><button type="button" onClick={() => router.push("/dashboard")}>← Dashboard</button><span className="role-label">{isCoach ? 'AREA COACH' : 'AREA GIOCATORE'}</span></header>
     <div className="trainings-head"><div><p className="eyebrow">COURTLY · U18</p><h1>Allenamenti</h1><p className="muted">Organizza le sessioni e raccogli le risposte in un unico posto.</p></div>{isCoach && <button className="btn-primary create-btn" onClick={() => setShowCreate(true)}>＋ Nuovo allenamento</button>}</div>
     {syncNotice && <p className="muted" role="status">{syncNotice}</p>}<div className="training-layout"><aside className="training-list"><h3>In programma</h3>{trainings.map(t => <button key={t.id} className={`training-select ${selected === t.id ? 'chosen' : ''}`} onClick={() => setSelected(t.id)}><span className="training-date">{new Date(`${t.date}T12:00:00`).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}</span><span><b>{t.title}</b><small>{t.time} · {t.location || 'Luogo da definire'}</small></span></button>)}{trainings.length === 0 && <p className="muted">Nessun allenamento programmato.</p>}</aside>
     {current ? <section className="training-detail"><div className="training-detail-top"><span className="tag">ALLENAMENTO</span><span className="pending">{stats.pending} risposte mancanti</span></div><h2>{current.title}</h2><p className="muted">◷ {new Date(`${current.date}T12:00:00`).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })} · {current.time}<br/>⌖ {current.location || 'Luogo da definire'}{current.deadline && <><br/>⌛ Risposte entro {new Date(current.deadline).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}</>}</p>{current.note && <div className="training-note">{current.note}</div>}
