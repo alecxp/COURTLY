@@ -54,13 +54,13 @@ export default function ProfilePage() {
 
   if (loading) return <main className="auth-wrap"><p>Caricamento profilo…</p></main>;
   return <main className="auth-wrap"><div className="auth-card">
-    <Link className="brand auth-brand" href="/"><span className="brand-mark">C</span> COURTLY</Link>
+    <Link className="brand auth-brand" href="/dashboard"><span className="brand-mark">C</span> COURTLY</Link>
     <h1>Il tuo profilo</h1><p className="muted">Il nickname è il nome mostrato agli altri giocatori.</p>
     <form onSubmit={save}>
       <label>Nickname<input value={nickname} onChange={e => setNickname(e.target.value)} minLength={3} maxLength={20} required /></label>
       <label>Squadra<input value={teamName} onChange={e => setTeamName(e.target.value)} maxLength={40} /></label>
       <label>Accesso<input value={role} readOnly /></label>
-      <label>Ruolo in campo<select value={teamRole} onChange={e => setTeamRole(e.target.value)}><option value="">Seleziona il tuo ruolo</option><option>Playmaker</option><option>Guardia</option><option>Ala</option><option>Ala grande</option><option>Centro</option><option>Altro</option></select></label>
+      <section className="profile-position-card"><div className="profile-position-heading"><span className="profile-position-icon">🏀</span><div><strong>RUOLO IN CAMPO</strong><small>La tua posizione nella squadra</small></div></div><label className="profile-position-label">Seleziona la tua posizione<select className="profile-position-select" value={teamRole} onChange={e => setTeamRole(e.target.value)} required><option value="">Scegli una posizione</option><option>Playmaker</option><option>Guardia</option><option>Ala</option><option>Ala grande</option><option>Centro</option></select></label><p className="profile-position-note">La posizione verrà salvata nel tuo profilo su questo dispositivo.</p></section>
       <button className="btn-primary" type="submit">Salva profilo</button>
     </form>
     {notice && <div className="auth-message" role="status">{notice}</div>}
