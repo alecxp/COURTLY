@@ -99,9 +99,9 @@ export default function TeamsPage() {
 
   return <main className="shell">
     <aside className="sidebar"><div className="brand"><span className="brand-mark">C</span> COURTLY</div><div className="team-switch">{team.category} · {team.season}</div><nav>
-      <Link href="/">◈ Panoramica</Link><Link href="/trainings">▣ Allenamenti</Link><Link href="/teams" className="active">♟ Squadra & membri</Link><Link href="/coach">◉ Area coach</Link><Link href="/pro-basket">🏀 Pro Basket</Link><Link href="/games">🏀 Partite</Link><Link href="/calendar">▦ Calendario</Link><Link href="/notifications">♧ Notifiche</Link>
+      <Link href="/dashboard">◈ Panoramica</Link><Link href="/trainings">▣ Allenamenti</Link><Link href="/teams" className="active">♟ Squadra & membri</Link><Link href="/coach">◉ Area coach</Link><Link href="/pro-basket">🏀 Pro Basket</Link><Link href="/games">🏀 Partite</Link><Link href="/calendar">▦ Calendario</Link><Link href="/notifications">♧ Notifiche</Link>
     </nav><div className="profile"><div className="avatar">{currentNickname.slice(0,2).toUpperCase() || 'C'}</div><div><b>{currentNickname || 'Profilo'}</b><small>{isCoach?'Coach':'Giocatore'}</small></div></div></aside>
-    <section className="content teams-content"><header className="topbar"><span>Dashboard / Squadra</span><Link href="/" className="notification">← Dashboard</Link></header>
+    <section className="content teams-content"><header className="topbar"><span>Dashboard / Squadra</span><Link href="/dashboard" className="notification">← Dashboard</Link></header>
       <div className="teams-hero"><div><p className="eyebrow">TEAM MANAGEMENT</p><h1>Squadra & membri</h1><p className="muted">Roster e staff in un unico posto.</p></div><div className="teams-ball">🏀</div></div>
       {notice && <div className="team-notice" role="status">{notice}<button onClick={() => setNotice('')}>×</button></div>}
       <div className="team-main-card"><div className="team-emblem">🏀</div><div className="team-main-details"><span className="eyebrow">SQUADRA ATTIVA</span><h2>{team.name}</h2><p>{team.category} · Stagione {team.season}</p></div>{isCoach && !isSupabaseConfigured && <button className="btn-primary team-create" onClick={() => setCreateOpen(v => !v)}>{createOpen ? 'Chiudi' : '＋ Crea squadra demo'}</button>}</div>
