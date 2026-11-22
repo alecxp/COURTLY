@@ -103,3 +103,9 @@
 
 /* Highlighted basketball position in personal profile */
 .profile-position-card{padding:18px;background:linear-gradient(135deg,#1c2b40,#111a29);border:1px solid #ff7a2466;border-radius:16px;box-shadow:0 0 0 1px #ff7a2412}.profile-position-heading{display:flex;align-items:center;gap:12px;margin-bottom:16px}.profile-position-icon{width:42px;height:42px;border-radius:12px;background:#ff7a2418;border:1px solid #ff7a2455;display:grid;place-items:center;font-size:22px}.profile-position-heading strong{display:block;font:700 13px 'Space Grotesk';letter-spacing:1px;color:#ff9a50}.profile-position-heading small{display:block;color:#9eacbf;font-size:11px;margin-top:4px}.profile-position-label{font-weight:700!important;color:#f2f5f9!important}.profile-position-select{background:#0b1320;color:#fff;border:1px solid #ff8b3d;border-radius:11px;padding:14px;width:100%;font:600 15px 'DM Sans';outline:none}.profile-position-select:focus{box-shadow:0 0 0 3px #ff7a2425}.profile-position-note{font-size:11px;color:#9eacbf;margin:10px 0 0}
+
+/* Dashboard profile is a real navigational link, styled like the sidebar user card. */
+.profile-link{width:100%;color:inherit;cursor:pointer;border:0;background:transparent;text-align:left;position:relative;padding-right:26px;transition:background .18s ease,opacity .18s ease;border-radius:10px;}
+.profile-link:hover{background:#182437;opacity:1;}
+.profile-link .profile-open-indicator{margin-left:auto;color:var(--orange);font-size:16px;opacity:.85;}
+.profile-link:focus-visible{outline:2px solid var(--orange);outline-offset:3px;}
