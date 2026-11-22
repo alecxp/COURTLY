@@ -32,7 +32,7 @@ export default function CoachPage() {
   const gameAvailable = useMemo(() => Object.values(nextGame?.responses||{}).filter(v=>v==='available').length, [nextGame]);
   const playerCount = (team.members||[]).filter(m=>m.role.toLowerCase()==='player').length;
   return <main className="shell coach-shell"><section className="content coach-content">
-    <header className="topbar"><Link href="/">← Ingresso</Link><span>AREA COACH</span></header>
+    <header className="topbar"><Link href="/dashboard">← Ingresso</Link><span>AREA COACH</span></header>
     <p className="eyebrow">COURTLY · AREA COACH</p><h1>Buongiorno, {nickname}.</h1><p className="muted">{dataSource==='shared'?'Riepilogo sincronizzato con la squadra.':dataSource==='error'?'Dati online non disponibili.':'Riepilogo dei dati locali di questo dispositivo.'}</p>
     <div className="stats">
       <div className="stat"><small>Prossimo allenamento</small><strong>{nextTraining?formatDate(nextTraining.date):'—'}</strong><label>{nextTraining?`${nextTraining.time||'Ora da definire'} · ${nextTraining.location||'Luogo da definire'}`:'Nessun allenamento programmato'}</label></div>
