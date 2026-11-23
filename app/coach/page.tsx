@@ -41,10 +41,12 @@ export default function CoachPage() {
         if (responseDelete.error) throw responseDelete.error;
         const eventDelete = await ctx.supabase.from('events').delete().eq('id', training.id).eq('team_id', ctx.teamId);
         if (eventDelete.error) throw eventDelete.error;
-      } else {
-        const saved = JSON.parse(localStorage.getItem(TRAININGS_KEY) || '[]');
-        localStorage.setItem(TRAININGS_KEY, JSON.stringify(Array.isArray(saved) ? saved.filter((t: Training) => t.id !== training.id) : []));
       }
+      // Remove from local cache as well, so stale local data cannot reappear on the trainings page.
+      try {
+        const saved = JSON.parse(localStorage.getItem(TRAININGS_KEY) || '[]');
+        if (Array.isArray(saved)) localStorage.setItem(TRAININGS_KEY, JSON.stringify(saved.filter((t: Training) => t.id !== training.id)));
+      } catch {}
       setTrainings(prev => prev.filter(t => t.id !== training.id));
       setSyncNotice('Allenamento eliminato.');
     } catch (error) {
@@ -62,7 +64,7 @@ export default function CoachPage() {
     <div className="section-heading"><h2>Azioni rapide</h2></div>
     <div className="quick-grid"><Link className="quick" href="/trainings"><span>＋</span><h3>Crea allenamento</h3><p>Programma la prossima sessione.</p></Link><Link className="quick" href="/games"><span>🏀</span><h3>Nuova partita</h3><p>Raccogli disponibilità e organizza la gara.</p></Link><Link className="quick" href="/teams"><span>♟</span><h3>Squadra e roster</h3><p>Gestisci i membri della squadra.</p></Link></div>
     <div className="section-heading"><h2>Gestione allenamenti</h2><span className="pending">{trainings.length} totali</span></div>
-    {!ready?<p className="muted">Caricamento…</p>:trainings.length===0?<p className="muted">Non ci sono allenamenti da gestire.</p>:<div className="roster">{trainings.map(t=><div key={t.id}><b>{t.title}</b><span>{formatDate(t.date)} · {t.time||'Orario da definire'}</span><button type="button" onClick={()=>void deleteTraining(t)} aria-label={`Elimina allenamento ${t.title}`}>🗑 Elimina</button></div>)}</div>}
+    {!ready?<p className="muted">Caricamento…</p>:trainings.length===0?<p className="muted">Non ci sono allenamenti da gestire.</p>:<div className="roster">{trainings.map(t=><div key={t.id}><b>{t.title}</b><span>{formatDate(t.date)} · {t.time||'Orario da definire'}</span><button type="button" onClick={()=>void deleteTraining(t)} aria-label={`Elimina allenamento ${t.title}`} title={`Elimina ${t.title}`} style={{marginLeft:'auto',padding:'8px 10px',borderRadius:10,background:'transparent',border:'1px solid var(--border, #334155)',cursor:'pointer',fontSize:18}}>🗑️</button></div>)}</div>}
     <div className="section-heading"><h2>Risposte allenamento</h2><span className="pending">{!ready?'Caricamento':dataSource==='shared'?'Dati condivisi':dataSource==='error'?'Sync non riuscita':'Dati locali'}</span></div>
     {!ready?<p className="muted">Caricamento…</p>:!nextTraining?<p className="muted">Nessun allenamento prossimo. Crea una sessione per raccogliere risposte.</p>:<div className="roster">{Object.entries(nextTraining.responses||{}).map(([player,status])=><div key={player}><b>{player}</b><span className={status==='present'?'present':status==='absent'?'absent':'pending'}>{status==='present'?'Presente':status==='absent'?'Assente':'Non ha risposto'}</span></div>)}</div>}
     <p className="muted">{dataSource==='shared'?'Dati sincronizzati dal database centrale della squadra.':dataSource==='error'?'La sincronizzazione è fallita; non vengono presentati dati locali come condivisi.':'Modalità locale/demo: dati disponibili solo su questo dispositivo.'}</p>
