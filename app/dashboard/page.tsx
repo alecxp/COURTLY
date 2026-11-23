@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 type Training = { id: string; title: string; date: string; time?: string; location?: string; responses?: Record<string, string> };
 type Game = { id: string; opponent: string; date: string; time?: string; venue?: string; homeAway?: 'home'|'away'; responses?: Record<string, string> };
@@ -9,6 +10,8 @@ const responseLabels: Record<string, string> = { present: 'Ci sarò', absent: 'N
 const keys = { trainings: 'courtly-trainings-v1', games: 'courtly-games-v1', team: 'courtly-team-demo-v1' };
 const dayLabel = (date: string) => new Date(`${date}T12:00:00`).toLocaleDateString('it-IT',{weekday:'short',day:'2-digit'}).toUpperCase();
 export default function Dashboard() {
+  const router = useRouter();
+  const exit = () => { ['courtly_demo_nickname','courtly_demo_team_name','courtly_demo_role','courtly_shared_team_id'].forEach(key => localStorage.removeItem(key)); router.push('/'); };
   const [nickname,setNickname]=useState('Giocatore');
   const [teamName,setTeamName]=useState('La tua squadra');
   const [trainings,setTrainings]=useState<Training[]>([]);
@@ -38,7 +41,7 @@ export default function Dashboard() {
   return <main className="shell"><aside className="sidebar"><div className="brand"><span className="brand-mark">C</span> COURTLY</div><div className="team-switch">{teamName} · Stagione 2026/27</div>
     <nav><Link className="active" href="/dashboard">◈ Panoramica</Link><Link href="/trainings">▣ Allenamenti</Link><Link href="/teams">♟ Squadra & membri</Link><Link href="/coach">◉ Area coach</Link><Link href="/pro-basket">🏀 Pro Basket</Link><Link href="/games">🏀 Partite</Link><Link href="/calendar">▦ Calendario</Link><Link href="/notifications">♧ Notifiche</Link><Link href="/statistics">▥ Statistiche</Link></nav>
     <Link href="/profile" className="profile profile-link" aria-label="Apri il profilo personale" title="Apri profilo personale"><div className="avatar">{initials}</div><div><b>{nickname}</b><small>{role==='coach'?'Coach':'Giocatore'}</small></div><span className="profile-open-indicator" aria-hidden="true">↗</span></Link></aside>
-    <section className="content"><header className="topbar"><span>Dashboard / {role==='coach'?'Coach':'Giocatore'}</span><Link href="/notifications" className="notification">♧ <b>Notifiche</b></Link></header>
+    <section className="content"><header className="topbar"><span>Dashboard / {role==='coach'?'Coach':'Giocatore'}</span><div className="dashboard-top-actions"><Link href="/notifications" className="notification">♧ <b>Notifiche</b></Link><button type="button" className="exit-button" onClick={exit}>↪ Esci</button></div></header>
       <div className="welcome"><div><p className="eyebrow">SPOGLIATOIO {teamName.toUpperCase()}</p><h1>Pronto a scendere<br/>in campo, {nickname}? <span>🏀</span></h1><p className="muted">La tua settimana, la tua squadra, tutto sotto controllo.</p></div><div className="hero-ball">🏀</div></div>
       <div className="stats"><div className="stat"><small>Risposte date</small><strong>{answered}<span> / {events.length}</span></strong><div className="progress"><i style={{width:`${events.length?Math.min(100,answered/events.length*100):0}%`}}/></div><label>Appuntamenti reali salvati localmente</label></div><div className="stat"><small>Presenze / disponibilità</small><strong>{attendanceCount}</strong><label className="orange">Risposte su questo dispositivo</label></div><div className="stat"><small>Da rispondere</small><strong>{pending}<span> eventi</span></strong><label className={pending?'orange':''}>{pending?'Non dimenticare di rispondere':'Tutto aggiornato'}</label></div></div>
       <div className="section-heading"><h2>Prossimi appuntamenti</h2><Link href="/calendar">Vedi calendario →</Link></div>
