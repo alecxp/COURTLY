@@ -103,6 +103,12 @@ export default function ProfilePage() {
   return <main className="auth-wrap"><div className="auth-card">
     <Link className="brand auth-brand" href="/dashboard"><span className="brand-mark">C</span> COURTLY</Link>
     <h1>Il tuo profilo</h1><p className="muted">Il nickname è il nome mostrato agli altri giocatori.</p>
+    <section style={{margin:'18px 0',padding:18,background:'#152235',border:'2px solid #ff8b3d',borderRadius:16,color:'#fff',display:'block',visibility:'visible'}}>
+      <div style={{fontSize:18,fontWeight:800,marginBottom:8}}>🔔 NOTIFICHE COURTLY</div>
+      <p style={{margin:'0 0 12px',fontSize:13,color:'#c4d0df'}}>{pushStatus}</p>
+      <button type="button" onClick={enablePush} disabled={pushEnabled} style={{width:'100%',padding:14,border:0,borderRadius:12,background:pushEnabled?'#334155':'#ff8b3d',color:'#fff',fontWeight:800,fontSize:15,cursor:'pointer'}}>{pushEnabled ? 'Notifiche attive' : '🔔 ATTIVA NOTIFICHE'}</button>
+      {pushEnabled && <button type="button" onClick={sendTestPush} style={{width:'100%',marginTop:10,padding:14,border:0,borderRadius:12,background:'#ff8b3d',color:'#fff',fontWeight:800,fontSize:15,cursor:'pointer'}}>Invia notifica di prova</button>}
+    </section>
     <form onSubmit={save}>
       <label>Nickname<input value={nickname} onChange={e => setNickname(e.target.value)} minLength={3} maxLength={20} required /></label>
       <label>Squadra<input value={teamName} onChange={e => setTeamName(e.target.value)} maxLength={40} /></label>
