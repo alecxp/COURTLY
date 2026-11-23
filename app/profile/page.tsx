@@ -10,6 +10,35 @@ export default function ProfilePage() {
   const [teamRole, setTeamRole] = useState('');
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(true);
+  const [pushStatus, setPushStatus] = useState('Notifiche non ancora attivate.');
+  const [pushEnabled, setPushEnabled] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) {
+      setPushStatus('Notifiche non supportate da questo browser.');
+      return;
+    }
+    setPushEnabled(Notification.permission === 'granted');
+    setPushStatus(Notification.permission === 'granted' ? 'Notifiche consentite su questo dispositivo.' : Notification.permission === 'denied' ? 'Permesso notifiche bloccato dal browser.' : 'Notifiche non ancora attivate.');
+  }, []);
+  async function enablePush() {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) { setPushStatus('Browser non compatibile.'); return; }
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') { setPushStatus(permission === 'denied' ? 'Permesso negato: abilitalo nelle impostazioni del browser.' : 'Attivazione annullata.'); return; }
+      await navigator.serviceWorker.register('/sw.js');
+      setPushEnabled(true);
+      setPushStatus('Notifiche attivate. Push remoto da collegare al server.');
+    } catch { setPushStatus('Attivazione non riuscita. Riprova.'); }
+  }
+  async function sendTestPush() {
+    if (!pushEnabled) return;
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      await registration.showNotification('COURTLY · Test', { body: 'Le notifiche sul dispositivo sono attive! 🏀', icon: '/courtly-icon.svg', data: { url: '/notifications' } });
+      setPushStatus('Notifica di test inviata.');
+    } catch { setPushStatus('Impossibile mostrare la notifica di test.'); }
+  }
+
 
   useEffect(() => {
     try {
