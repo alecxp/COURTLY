@@ -109,3 +109,10 @@
 .profile-link:hover{background:#182437;opacity:1;}
 .profile-link .profile-open-indicator{margin-left:auto;color:var(--orange);font-size:16px;opacity:.85;}
 .profile-link:focus-visible{outline:2px solid var(--orange);outline-offset:3px;}
+
+/* COURTLY logout controls */
+.dashboard-top-actions{display:flex;align-items:center;gap:10px}
+.exit-button,.mobile-nav button{border:1px solid #3b4d63;background:#182437;color:#e8edf5;border-radius:10px;padding:8px 12px;font:600 12px 'DM Sans';cursor:pointer;transition:background .18s ease,border-color .18s ease}
+.exit-button:hover,.mobile-nav button:hover{background:#24364d;border-color:#ff913e}
+.mobile-nav button{display:flex;flex:1;min-width:0;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:transparent;border:0;color:#a8b4c4;font-size:17px;padding:3px 0}
+.mobile-nav button small{font-size:9px;letter-spacing:.2px;white-space:nowrap}
