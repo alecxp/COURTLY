@@ -82,6 +82,12 @@ export default function ProfilePage() {
       <button className="btn-primary" type="submit">Salva profilo</button>
     </form>
     {notice && <div className="auth-message" role="status">{notice}</div>}
+    <section className="profile-position-card" style={{marginTop:18}}>
+      <div className="profile-position-heading"><span className="profile-position-icon">🔔</span><div><strong>NOTIFICHE COURTLY</strong><small>Avvisi su questo dispositivo</small></div></div>
+      <p className="profile-position-note">{pushStatus}</p>
+      <button type="button" className="btn-primary" onClick={enablePush} disabled={pushEnabled}>{pushEnabled ? 'Notifiche attive' : 'Attiva notifiche'}</button>
+      {pushEnabled && <button type="button" className="btn-primary" style={{marginTop:10}} onClick={sendTestPush}>Invia notifica di prova</button>}
+    </section>
     <p className="auth-switch"><Link href="/dashboard">Torna alla dashboard</Link></p>
   </div></main>;
 }
