@@ -42,21 +42,23 @@ export default function ProfilePage() {
       localStorage.setItem('courtly_demo_nickname', cleanNickname);
       localStorage.setItem('courtly_demo_team_name', cleanTeam);
       localStorage.setItem('courtly_demo_team_role', teamRole.trim());
-      // Keep the selected field position connected to the local roster.
+      // Synchronize the profile's selected position into this device's demo roster.
       const rosterKey = 'courtly-team-demo-v1';
       const rosterRaw = localStorage.getItem(rosterKey);
       if (rosterRaw) {
         const roster = JSON.parse(rosterRaw);
         if (roster && Array.isArray(roster.members)) {
-          const existing = roster.members.find((member: any) => member.nickname?.trim().toLowerCase() === cleanNickname.toLowerCase());
-          if (existing) {
-            existing.position = teamRole.trim();
-            roster.members = roster.members.map((member: any) => member.nickname?.trim().toLowerCase() === cleanNickname.toLowerCase() ? existing : member);
-          } else if (cleanTeam) {
+          const currentRole = localStorage.getItem('courtly_demo_role') === 'coach' ? 'Coach' : 'Player';
+          const idx = roster.members.findIndex((member: any) => member.nickname?.trim().toLowerCase() === cleanNickname.toLowerCase());
+          if (idx >= 0) {
+            roster.members[idx] = { ...roster.members[idx], position: currentRole === 'Player' ? teamRole.trim() : undefined };
+          } else if (cleanTeam && currentRole === 'Player') {
             roster.members.push({ id: 'current-user-profile', nickname: cleanNickname, role: 'Player', position: teamRole.trim() });
           }
           localStorage.setItem(rosterKey, JSON.stringify(roster));
         }
+      } else if (cleanTeam && localStorage.getItem('courtly_demo_role') !== 'coach') {
+        localStorage.setItem(rosterKey, JSON.stringify({ name: cleanTeam, category: 'Categoria da definire', season: '2026/27', members: [{ id: 'current-user-profile', nickname: cleanNickname, role: 'Player', position: teamRole.trim() }] }));
       }
     } catch {
       setNotice('Salvataggio locale non disponibile nel browser.');
