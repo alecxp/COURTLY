@@ -69,7 +69,16 @@ export default function TeamsPage() {
         if (parsed && typeof parsed === 'object' && 'name' in parsed && 'members' in parsed && Array.isArray((parsed as { members?: unknown }).members)) {
           const oldScaffold = (parsed as Team).name === 'Basket Milano' && (parsed as Team).members.length === 5 && (parsed as Team).members.every(m => ['1','2','3','4','5'].includes(m.id));
           if (oldScaffold) { localStorage.removeItem(KEY); setTeam(seed); }
-          else setTeam(parsed as Team);
+          else {
+            const storedTeam = parsed as Team;
+            // Always refresh the current user's position from their profile selection.
+            storedTeam.members = storedTeam.members.map(member =>
+              member.nickname?.trim().toLowerCase() === enteredNickname.toLowerCase() && member.role === 'Player'
+                ? { ...member, position: savedPosition || member.position }
+                : member
+            );
+            setTeam(storedTeam);
+          }
         }
       } else {
         const enteredTeam = localStorage.getItem('courtly_demo_team_name')?.trim();
