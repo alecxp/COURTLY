@@ -31,6 +31,26 @@ export default function CoachPage() {
   const trainingStats = useMemo(() => { const t = nextTraining; const r = t?.responses || {}; return { present:Object.values(r).filter(v=>v==='present').length, absent:Object.values(r).filter(v=>v==='absent').length, pending:Math.max(0,(team.members||[]).filter(m=>m.role.toLowerCase()==='player').length-Object.keys(r).length) }; }, [nextTraining,team]);
   const gameAvailable = useMemo(() => Object.values(nextGame?.responses||{}).filter(v=>v==='available').length, [nextGame]);
   const playerCount = (team.members||[]).filter(m=>m.role.toLowerCase()==='player').length;
+  const deleteTraining = async (training: Training) => {
+    if (!window.confirm(`Eliminare l'allenamento "${training.title}"? Questa azione non può essere annullata.`)) return;
+    try {
+      if (dataSource === 'shared') {
+        const ctx = await getSharedContext();
+        if (!ctx) throw new Error('Connessione condivisa non disponibile.');
+        const responseDelete = await ctx.supabase.from('event_responses').delete().eq('event_id', training.id);
+        if (responseDelete.error) throw responseDelete.error;
+        const eventDelete = await ctx.supabase.from('events').delete().eq('id', training.id).eq('team_id', ctx.teamId);
+        if (eventDelete.error) throw eventDelete.error;
+      } else {
+        const saved = JSON.parse(localStorage.getItem(TRAININGS_KEY) || '[]');
+        localStorage.setItem(TRAININGS_KEY, JSON.stringify(Array.isArray(saved) ? saved.filter((t: Training) => t.id !== training.id) : []));
+      }
+      setTrainings(prev => prev.filter(t => t.id !== training.id));
+      setSyncNotice('Allenamento eliminato.');
+    } catch (error) {
+      setSyncNotice(error instanceof Error ? `Eliminazione non riuscita: ${error.message}` : 'Eliminazione non riuscita.');
+    }
+  };
   return <main className="shell coach-shell"><section className="content coach-content">
     <header className="topbar"><Link href="/dashboard">← Ingresso</Link><span>AREA COACH</span></header>
     <p className="eyebrow">COURTLY · AREA COACH</p><h1>Buongiorno, {nickname}.</h1><p className="muted">{dataSource==='shared'?'Riepilogo sincronizzato con la squadra.':dataSource==='error'?'Dati online non disponibili.':'Riepilogo dei dati locali di questo dispositivo.'}</p>
@@ -41,6 +61,8 @@ export default function CoachPage() {
     </div>
     <div className="section-heading"><h2>Azioni rapide</h2></div>
     <div className="quick-grid"><Link className="quick" href="/trainings"><span>＋</span><h3>Crea allenamento</h3><p>Programma la prossima sessione.</p></Link><Link className="quick" href="/games"><span>🏀</span><h3>Nuova partita</h3><p>Raccogli disponibilità e organizza la gara.</p></Link><Link className="quick" href="/teams"><span>♟</span><h3>Squadra e roster</h3><p>Gestisci i membri della squadra.</p></Link></div>
+    <div className="section-heading"><h2>Gestione allenamenti</h2><span className="pending">{trainings.length} totali</span></div>
+    {!ready?<p className="muted">Caricamento…</p>:trainings.length===0?<p className="muted">Non ci sono allenamenti da gestire.</p>:<div className="roster">{trainings.map(t=><div key={t.id}><b>{t.title}</b><span>{formatDate(t.date)} · {t.time||'Orario da definire'}</span><button type="button" onClick={()=>void deleteTraining(t)} aria-label={`Elimina allenamento ${t.title}`}>🗑 Elimina</button></div>)}</div>}
     <div className="section-heading"><h2>Risposte allenamento</h2><span className="pending">{!ready?'Caricamento':dataSource==='shared'?'Dati condivisi':dataSource==='error'?'Sync non riuscita':'Dati locali'}</span></div>
     {!ready?<p className="muted">Caricamento…</p>:!nextTraining?<p className="muted">Nessun allenamento prossimo. Crea una sessione per raccogliere risposte.</p>:<div className="roster">{Object.entries(nextTraining.responses||{}).map(([player,status])=><div key={player}><b>{player}</b><span className={status==='present'?'present':status==='absent'?'absent':'pending'}>{status==='present'?'Presente':status==='absent'?'Assente':'Non ha risposto'}</span></div>)}</div>}
     <p className="muted">{dataSource==='shared'?'Dati sincronizzati dal database centrale della squadra.':dataSource==='error'?'La sincronizzazione è fallita; non vengono presentati dati locali come condivisi.':'Modalità locale/demo: dati disponibili solo su questo dispositivo.'}</p>
