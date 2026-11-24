@@ -16,11 +16,11 @@ export default function LockerEntrance() {
     const clean = nickname.trim();
     if (clean.length < 3) { setError('Il nickname deve contenere almeno 3 caratteri.'); return; }
     if (teamName.trim().toUpperCase() !== 'PEACOX BASKET') { setError('Accesso riservato ai membri PEACOX BASKET.'); return; }
-    if (role === 'coach' && coachCode !== '0000') { setError('Codice coach non corretto.'); return; }
+    
     setBusy(true); setError('');
     try {
-      const accessResponse = await fetch('/api/access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: accessCode }) });
-      if (!accessResponse.ok) throw new Error(accessResponse.status === 429 ? 'Troppi tentativi. Riprova tra poco.' : 'Codice di accesso non corretto.');
+      const accessResponse = await fetch('/api/access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role, code: role === 'coach' ? coachCode : accessCode }) });
+      if (!accessResponse.ok) throw new Error(accessResponse.status === 429 ? 'Troppi tentativi. Riprova tra poco.' : role === 'coach' ? 'Codice coach non corretto.' : 'Codice di accesso non corretto.');
       let effectiveRole: 'player' | 'coach' = role === 'coach' ? 'coach' : 'player';
       if (isSupabaseConfigured) {
         const { data: sessionResult, error: sessionError } = await supabase.auth.getSession();
