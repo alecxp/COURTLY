@@ -29,7 +29,8 @@ export async function POST(req: Request) {
   else current.count++;
   let body: { code?: string; role?: string } = {};
   try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid request' }, { status: 400 }); }
-  const expectedCode = body.role === 'coach' ? '1921' : process.env.COURTLY_ACCESS_CODE;\n  if (!expectedCode || !safeEqual(String(body.code ?? ''), expectedCode)) {
+  const expectedCode = body.role === 'coach' ? '1921' : process.env.COURTLY_ACCESS_CODE;
+  if (!expectedCode || !safeEqual(String(body.code ?? ''), expectedCode)) {
     return NextResponse.json({ error: 'Invalid code' }, { status: 401 });
   }
   attempts.delete(ip);
