@@ -12,14 +12,6 @@ export default function LockerEntrance() {
   const [error, setError] = useState('');
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    const savedNickname = localStorage.getItem('courtly_demo_nickname')?.trim();
-    const savedTeam = localStorage.getItem('courtly_demo_team_name')?.trim();
-    const savedRole = localStorage.getItem('courtly_demo_role');
-    if (savedNickname && savedTeam?.trim().toUpperCase() === 'PEACOX BASKET' && (savedRole === 'coach' || savedRole === 'player')) {
-      router.replace(savedRole === 'coach' ? '/coach' : '/dashboard');
-    }
-  }, [router]);
   const enter = async () => {
     const clean = nickname.trim();
     if (clean.length < 3) { setError('Il nickname deve contenere almeno 3 caratteri.'); return; }
