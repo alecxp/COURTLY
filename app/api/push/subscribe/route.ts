@@ -28,7 +28,8 @@ export async function POST(req: Request) {
     }
     const { data: profile } = await auth.client.from('profiles').select('team_id').eq('id', auth.user.id).single();
     const row = {
-      user_id: auth.user.id,\n      team_id: profile?.team_id || null,
+      user_id: auth.user.id,
+      team_id: profile?.team_id || null,
       endpoint: subscription.endpoint,
       p256dh_key: subscription.keys.p256dh,
       auth_key: subscription.keys.auth,
