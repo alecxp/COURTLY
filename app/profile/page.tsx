@@ -20,15 +20,29 @@ export default function ProfilePage() {
     setPushEnabled(Notification.permission === 'granted');
     setPushStatus(Notification.permission === 'granted' ? 'Notifiche consentite su questo dispositivo.' : Notification.permission === 'denied' ? 'Permesso notifiche bloccato dal browser.' : 'Notifiche non ancora attivate.');
   }, []);
+  function urlBase64ToUint8Array(base64: string) {
+    const padding = '='.repeat((4 - base64.length % 4) % 4);
+    const raw = window.atob((base64 + padding).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(raw, (char) => char.charCodeAt(0));
+  }
   async function enablePush() {
-    if (!('Notification' in window) || !('serviceWorker' in navigator)) { setPushStatus('Browser non compatibile.'); return; }
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) { setPushStatus('Push non supportate da questo browser.'); return; }
     try {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') { setPushStatus(permission === 'denied' ? 'Permesso negato: abilitalo nelle impostazioni del browser.' : 'Attivazione annullata.'); return; }
-      await navigator.serviceWorker.register('/sw.js');
+      const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!publicKey) { setPushStatus('Configurazione push incompleta: manca la chiave VAPID pubblica.'); return; }
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      const readyRegistration = await navigator.serviceWorker.ready;
+      const subscription = await readyRegistration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) });
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (sessionError || !token) { setPushStatus('Push creata sul dispositivo, ma serve un account COURTLY autenticato per salvarla sul server.'); return; }
+      const response = await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ subscription }) });
+      if (!response.ok) { setPushStatus('Sottoscrizione push non salvata sul server.'); return; }
       setPushEnabled(true);
-      setPushStatus('Notifiche attivate. Push remoto da collegare al server.');
-    } catch { setPushStatus('Attivazione non riuscita. Riprova.'); }
+      setPushStatus('Push attive e dispositivo registrato sul server.');
+    } catch { setPushStatus('Attivazione push non riuscita. Verifica browser e configurazione VAPID.'); }
   }
   async function sendTestPush() {
     if (!pushEnabled) return;
