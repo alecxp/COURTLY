@@ -26,7 +26,8 @@ export async function POST(req: Request) {
     if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
       return NextResponse.json({ error: 'Invalid push subscription' }, { status: 400 });
     }
-    const { data: profile } = await auth.client.from('profiles').select('team_id').eq('id', auth.user.id).single();\n    const row = {
+    const { data: profile } = await auth.client.from('profiles').select('team_id').eq('id', auth.user.id).single();
+    const row = {
       user_id: auth.user.id,\n      team_id: profile?.team_id || null,
       endpoint: subscription.endpoint,
       p256dh_key: subscription.keys.p256dh,
