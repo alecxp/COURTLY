@@ -6,7 +6,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
 export default function LockerEntrance() {
   const [role, setRole] = useState<'player'|'coach'>('player');
   const [nickname, setNickname] = useState('');
-  const [teamName, setTeamName] = useState('');
+  const [teamName, setTeamName] = useState('PEACOX BASKET');
   const [coachCode, setCoachCode] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
@@ -15,14 +15,14 @@ export default function LockerEntrance() {
     const savedNickname = localStorage.getItem('courtly_demo_nickname')?.trim();
     const savedTeam = localStorage.getItem('courtly_demo_team_name')?.trim();
     const savedRole = localStorage.getItem('courtly_demo_role');
-    if (savedNickname && savedTeam && (savedRole === 'coach' || savedRole === 'player')) {
+    if (savedNickname && savedTeam?.trim().toUpperCase() === 'PEACOX BASKET' && (savedRole === 'coach' || savedRole === 'player')) {
       router.replace(savedRole === 'coach' ? '/coach' : '/dashboard');
     }
   }, [router]);
   const enter = async () => {
     const clean = nickname.trim();
     if (clean.length < 3) { setError('Il nickname deve contenere almeno 3 caratteri.'); return; }
-    if (teamName.trim().length < 2) { setError('Inserisci il nome della tua squadra.'); return; }
+    if (teamName.trim().toUpperCase() !== 'PEACOX BASKET') { setError('Accesso riservato ai membri PEACOX BASKET.'); return; }
     if (role === 'coach' && coachCode !== '0000') { setError('Codice coach non corretto.'); return; }
     setBusy(true); setError('');
     try {
@@ -82,10 +82,10 @@ export default function LockerEntrance() {
       <input className="locker-input" value={nickname} onChange={e=>{setNickname(e.target.value);setError('')}} placeholder={role==='player'?'Es. Ace23':'Es. CoachAndrea'} maxLength={20} onKeyDown={e=>e.key==='Enter'&&enter()}/>
       {role==='coach'&&<><label className="locker-input-label">Codice coach</label><input className="locker-input" value={coachCode} onChange={e=>{setCoachCode(e.target.value);setError('')}} placeholder="Inserisci il codice" type="password" maxLength={4} inputMode="numeric" onKeyDown={e=>e.key==='Enter'&&enter()}/></> }
       <label className="locker-input-label">La tua squadra</label>
-      <input className="locker-input" value={teamName} onChange={e=>{setTeamName(e.target.value);setError('')}} placeholder="Es. Basket Milano" maxLength={40} onKeyDown={e=>e.key==='Enter'&&enter()}/>
+      <input className="locker-input" value="PEACOX BASKET" readOnly aria-label="Squadra autorizzata"/>
       {error&&<p className="locker-error">{error}</p>}
       <button className="locker-enter" onClick={enter} disabled={busy}>{busy ? 'ENTRO…' : 'ENTRA IN SPOGLIATOIO'} <span>↗</span></button>
-      <p className="locker-footnote">Solo nickname · nessuna email o password</p>
+      <p className="locker-footnote">Accesso riservato esclusivamente ai membri PEACOX BASKET.</p>
       {role==='coach'&&<p className="locker-footnote">Codice provvisorio coach: 0000</p>}
     </section>
     <footer className="locker-footer">COURTLY <span>PLAY TOGETHER.</span></footer>
