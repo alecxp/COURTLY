@@ -37,6 +37,6 @@ export async function POST(req: Request) {
   const payload = String(expires);
   const token = payload + '.' + sign(payload);
   const res = NextResponse.json({ ok: true });
-  res.cookies.set('courtly_access', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', expires: new Date(expires });
+  res.cookies.set('courtly_access', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', expires: new Date(expires) });
   return res;
 }
