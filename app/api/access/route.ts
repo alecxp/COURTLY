@@ -16,7 +16,7 @@ function sign(payload: string) {
 }
 
 export async function POST(req: Request) {
-  if (!process.env.COURTLY_ACCESS_CODE || !process.env.ACCESS_SESSION_SECRET) {
+  if (!process.env.ACCESS_SESSION_SECRET || (!process.env.COURTLY_ACCESS_CODE && !process.env.COURTLY_COACH_CODE)) {
     return NextResponse.json({ error: 'Access protection is not configured.' }, { status: 503 });
   }
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
@@ -27,9 +27,9 @@ export async function POST(req: Request) {
   }
   if (!current || current.resetAt <= now) attempts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
   else current.count++;
-  let body: { code?: string } = {};
+  let body: { code?: string; role?: string } = {};
   try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid request' }, { status: 400 }); }
-  if (!safeEqual(String(body.code ?? ''), process.env.COURTLY_ACCESS_CODE)) {
+  const expectedCode = body.role === 'coach' ? process.env.COURTLY_COACH_CODE : process.env.COURTLY_ACCESS_CODE;\n  if (!expectedCode || !safeEqual(String(body.code ?? ''), expectedCode)) {
     return NextResponse.json({ error: 'Invalid code' }, { status: 401 });
   }
   attempts.delete(ip);
