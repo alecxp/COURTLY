@@ -8,6 +8,7 @@ export default function LockerEntrance() {
   const [nickname, setNickname] = useState('');
   const [teamName, setTeamName] = useState('PEACOX BASKET');
   const [coachCode, setCoachCode] = useState('');
+  const [accessCode, setAccessCode] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -26,6 +27,8 @@ export default function LockerEntrance() {
     if (role === 'coach' && coachCode !== '0000') { setError('Codice coach non corretto.'); return; }
     setBusy(true); setError('');
     try {
+      const accessResponse = await fetch('/api/access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: accessCode }) });
+      if (!accessResponse.ok) throw new Error(accessResponse.status === 429 ? 'Troppi tentativi. Riprova tra poco.' : 'Codice di accesso non corretto.');
       let effectiveRole: 'player' | 'coach' = role === 'coach' ? 'coach' : 'player';
       if (isSupabaseConfigured) {
         const { data: sessionResult, error: sessionError } = await supabase.auth.getSession();
@@ -81,6 +84,8 @@ export default function LockerEntrance() {
       <label className="locker-input-label">{role==='player'?'Scegli il tuo nickname':'Nickname coach'}</label>
       <input className="locker-input" value={nickname} onChange={e=>{setNickname(e.target.value);setError('')}} placeholder={role==='player'?'Es. Ace23':'Es. CoachAndrea'} maxLength={20} onKeyDown={e=>e.key==='Enter'&&enter()}/>
       {role==='coach'&&<><label className="locker-input-label">Codice coach</label><input className="locker-input" value={coachCode} onChange={e=>{setCoachCode(e.target.value);setError('')}} placeholder="Inserisci il codice" type="password" maxLength={4} inputMode="numeric" onKeyDown={e=>e.key==='Enter'&&enter()}/></> }
+      <label className="locker-input-label">Codice di accesso squadra</label>
+      <input className="locker-input" value={accessCode} onChange={e=>{setAccessCode(e.target.value);setError('')}} placeholder="Codice di accesso" type="password" inputMode="numeric" maxLength={12} onKeyDown={e=>e.key==='Enter'&&enter()}/>
       <label className="locker-input-label">La tua squadra</label>
       <input className="locker-input" value="PEACOX BASKET" readOnly aria-label="Squadra autorizzata"/>
       {error&&<p className="locker-error">{error}</p>}
