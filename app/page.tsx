@@ -76,14 +76,13 @@ export default function LockerEntrance() {
       <label className="locker-input-label">{role==='player'?'Scegli il tuo nickname':'Nickname coach'}</label>
       <input className="locker-input" value={nickname} onChange={e=>{setNickname(e.target.value);setError('')}} placeholder={role==='player'?'Es. Ace23':'Es. CoachAndrea'} maxLength={20} onKeyDown={e=>e.key==='Enter'&&enter()}/>
       {role==='coach'&&<><label className="locker-input-label">Codice coach</label><input className="locker-input" value={coachCode} onChange={e=>{setCoachCode(e.target.value);setError('')}} placeholder="Inserisci il codice" type="password" maxLength={4} inputMode="numeric" onKeyDown={e=>e.key==='Enter'&&enter()}/></> }
-      <label className="locker-input-label">Codice di accesso squadra</label>
-      <input className="locker-input" value={accessCode} onChange={e=>{setAccessCode(e.target.value);setError('')}} placeholder="Codice di accesso" type="password" inputMode="numeric" maxLength={12} onKeyDown={e=>e.key==='Enter'&&enter()}/>
+      {role==='player'&&<><label className="locker-input-label">Codice di accesso squadra</label><input className="locker-input" value={accessCode} onChange={e=>{setAccessCode(e.target.value);setError('')}} placeholder="Codice di accesso" type="password" inputMode="numeric" maxLength={12} onKeyDown={e=>e.key==='Enter'&&enter()}/></> }
       <label className="locker-input-label">La tua squadra</label>
       <input className="locker-input" value="PEACOX BASKET" readOnly aria-label="Squadra autorizzata"/>
       {error&&<p className="locker-error">{error}</p>}
       <button className="locker-enter" onClick={enter} disabled={busy}>{busy ? 'ENTRO…' : 'ENTRA IN SPOGLIATOIO'} <span>↗</span></button>
       <p className="locker-footnote">Accesso riservato esclusivamente ai membri PEACOX BASKET.</p>
-      {role==='coach'&&<p className="locker-footnote">Codice provvisorio coach: 0000</p>}
+      {role==='coach'&&<p className="locker-footnote">Codice coach: 1921</p>}
     </section>
     <footer className="locker-footer">COURTLY <span>PLAY TOGETHER.</span></footer>
   </main>;
