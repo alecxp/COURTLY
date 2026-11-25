@@ -61,7 +61,7 @@ export default function PrimePiumePage() {
       <section className="statistics-panel"><div className="section-heading"><h2>Classifica presenze</h2><span className="pending">{stats.length} giocatori</span></div>
        {stats.length===0?<div className="statistics-empty"><h3>Il gruppo è pronto a crescere</h3><p>Il coach può aggiungere giocatori alle Prime Piume dal roster.</p></div>:(
         <div className="statistics-history">{stats.map((p,i)=>(
-         <div className="history-row" key={p.id}><div className="history-date">#{i+1}</div><div className="history-title"><b>{p.nickname}</b><small>{p.present} presenze · {p.absent} assenze · {p.pending} senza risposta</small></div><div className="history-status"><strong>{p.rate}%</strong><small>{p.streak} 🔥</small></div>
+         <div className="history-row" key={p.id}><div className="history-date">#{i+1}</div><div className="history-title"><b>{p.nickname}</b><small>{p.present} presenze · {p.absent} assenze · {p.pending} senza risposta</small></div><div className="history-status"><strong>{p.rate}%</strong><small>{p.streak} 🔥</small></div></div>
         ))}</div>
        )}
       </section>
