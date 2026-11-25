@@ -46,10 +46,18 @@ export default function TeamsPage() {
           const { data: sharedTeam, error: teamError } = await supabase.from('teams').select('id,name,category,season').eq('id', teamId).maybeSingle();
           if (teamError) throw teamError;
           if (!sharedTeam) throw new Error('Squadra non trovata nel database.');
-          const { data: roster, error: rosterError } = await supabase.from('team_members').select('id,user_id,role,is_first_year,profiles(nickname)').eq('team_id', teamId);
+          // Query memberships and profiles separately to avoid relying on an implicit FK relationship.
+          const { data: roster, error: rosterError } = await supabase.from('team_members').select('id,user_id,role,is_first_year').eq('team_id', teamId);
           if (rosterError) throw rosterError;
+          const userIds = Array.from(new Set((roster || []).map((row: any) => row.user_id).filter(Boolean)));
+          const { data: profiles, error: profilesError } = userIds.length
+            ? await supabase.from('profiles').select('id,nickname,role,team_id').in('id', userIds)
+            : { data: [], error: null };
+          if (profilesError) throw profilesError;
+          const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
           const members: Member[] = (roster || []).map((row: any) => {
-            const memberNickname = row.profiles?.nickname || 'Utente';
+            const profile = profileById.get(row.user_id);
+            const memberNickname = profile?.nickname || 'Utente';
             // Position is currently stored locally for this device; display it for the current user even in online roster mode.
             const localPosition = memberNickname.trim().toLowerCase() === enteredNickname.toLowerCase() ? savedPosition : '';
             return { id: row.id, nickname: memberNickname, role: (row.role === 'coach' || row.role === 'admin' ? 'Coach' : 'Player') as Member['role'], position: localPosition || undefined, isFirstYear: !!row.is_first_year };
