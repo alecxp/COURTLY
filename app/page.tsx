@@ -82,7 +82,7 @@ export default function LockerEntrance() {
       {error&&<p className="locker-error">{error}</p>}
       <button className="locker-enter" onClick={enter} disabled={busy}>{busy ? 'ENTRO…' : 'ENTRA IN SPOGLIATOIO'} <span>↗</span></button>
       <p className="locker-footnote">Accesso riservato esclusivamente ai membri PEACOX BASKET.</p>
-      {role==='coach'&&<p className="locker-footnote">Codice coach: 1921</p>}
+      
     </section>
     <footer className="locker-footer">COURTLY <span>PLAY TOGETHER.</span></footer>
   </main>;
