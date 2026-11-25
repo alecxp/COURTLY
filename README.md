@@ -93,3 +93,13 @@ Apply these migrations after the existing shared-events migration, in order:
 - `supabase/migrations/20261129_shared_notifications.sql`
 
 This integration is not runtime-verified yet: dependencies could not be installed in the environment, and no Supabase project credentials/database were available. Before release, run build/typecheck, apply migrations in Supabase, and test coach/player accounts on separate devices. Push notifications, realtime subscriptions, Pro Basket official data, and full multi-device verification remain outstanding.
+
+
+## Shared code access — server secrets required
+
+The access endpoint accepts only the explicit roles `player` and `coach`. Configure these server-side environment variables (never in NEXT_PUBLIC variables):
+- `COURTLY_ACCESS_CODE=1891`
+- `COURTLY_COACH_CODE=1921`
+- `ACCESS_SESSION_SECRET` (a long random secret used to sign the access cookie)
+
+If any are missing, the endpoint returns 503 rather than silently using a code embedded in source. The current in-memory attempt counter is a basic safeguard only; it is not a distributed rate limiter and must be replaced with persistent rate limiting before production.
