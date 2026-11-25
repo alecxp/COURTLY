@@ -19,8 +19,9 @@ async function valid(token: string) {
     let diff = 0;
     for (let i = 0; i < signature.length; i++) diff |= signature.charCodeAt(i) ^ expected.charCodeAt(i);
     if (diff !== 0) return false;
-    const expiry = Number(payload);
-    return Number.isFinite(expiry) && expiry > Date.now();
+    const decoded = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(payload.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))));
+    const expiry = Number(decoded.expires);
+    return (decoded.role === 'player' || decoded.role === 'coach') && Number.isFinite(expiry) && expiry > Date.now();
   } catch {
     return false;
   }
