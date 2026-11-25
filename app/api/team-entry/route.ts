@@ -9,7 +9,9 @@ function verify(token:string,secret:string){
  try{const parsed=JSON.parse(Buffer.from(payload,'base64url').toString());if(parsed.expires<Date.now())return null;return parsed as {role:'player'|'coach';expires:number};}catch{return null;}
 }
 export async function POST(req:Request){
- const url=process.env.NEXT_PUBLIC_SUPABASE_URL, anon=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, service=process.env.SUPABASE_SERVICE_ROLE_KEY, secret=process.env.ACCESS_SESSION_SECRET;
+ const rawUrl=process.env.NEXT_PUBLIC_SUPABASE_URL, anon=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, service=process.env.SUPABASE_SERVICE_ROLE_KEY, secret=process.env.ACCESS_SESSION_SECRET;
+ let url:string|undefined;
+ try{url=rawUrl?new URL(rawUrl).origin:undefined;}catch{url=undefined;}
  if(!url||!anon||!service||!secret)return NextResponse.json({error:'Team entry server is not configured.'},{status:503});
  const token=req.headers.get('authorization')?.replace(/^Bearer /,'');
  if(!token)return NextResponse.json({error:'Session missing.'},{status:401});
