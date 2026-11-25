@@ -28,7 +28,7 @@ async function valid(token: string) {
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
-  if (path === '/' || path.startsWith('/api/access') || path.startsWith('/_next') || path === '/favicon.ico' || path === '/sw.js') return NextResponse.next();
+  if (path === '/' || path.startsWith('/api/access') || path === '/api/team-entry' || path.startsWith('/_next') || path === '/favicon.ico' || path === '/sw.js') return NextResponse.next();
   const token = req.cookies.get('courtly_access')?.value;
   if (token && await valid(token)) return NextResponse.next();
   const url = req.nextUrl.clone();
