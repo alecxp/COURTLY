@@ -35,8 +35,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid code' }, { status: 401 });
   }
   const expires = now + 7 * 24 * 60 * 60 * 1000;
-  const payload = String(expires);
-  const token = payload + '.' + sign(payload);
+  const payload = JSON.stringify({ role: body.role, expires });
+  const encoded = Buffer.from(payload).toString('base64url');
+  const token = encoded + '.' + sign(encoded);
   const res = NextResponse.json({ ok: true });
   res.cookies.set('courtly_access', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', expires: new Date(expires) });
   return res;
