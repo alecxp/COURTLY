@@ -29,15 +29,20 @@ export default function TeamsPage() {
     if (isSupabaseConfigured) {
       // In online mode never fall back to browser-local demo roster: it could
       // misrepresent a stale, unrelated team as the current shared team.
-      const teamId = localStorage.getItem('courtly_shared_team_id');
-      if (!teamId) {
-        setTeam(seed);
-        setNotice('Squadra condivisa non collegata. Rientra dalla schermata iniziale per associarti alla squadra.');
-        setReady(true);
-        return;
-      }
       (async () => {
         try {
+          // Resolve the team from the authenticated database profile; localStorage is only a fallback.
+          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError) throw sessionError;
+          const userId = sessionData.session?.user.id;
+          if (!userId) throw new Error('Sessione non autenticata. Effettua nuovamente l’accesso.');
+          const { data: ownProfile, error: profileError } = await supabase.from('profiles').select('team_id,nickname,role').eq('id', userId).maybeSingle();
+          if (profileError) throw profileError;
+          const teamId = ownProfile?.team_id || localStorage.getItem('courtly_shared_team_id');
+          if (!teamId) throw new Error('Il tuo profilo non risulta associato a una squadra.');
+          localStorage.setItem('courtly_shared_team_id', teamId);
+          if (ownProfile?.nickname) setCurrentNickname(ownProfile.nickname);
+          if (ownProfile?.role) setIsCoach(ownProfile.role === 'coach');
           const { data: sharedTeam, error: teamError } = await supabase.from('teams').select('id,name,category,season').eq('id', teamId).maybeSingle();
           if (teamError) throw teamError;
           if (!sharedTeam) throw new Error('Squadra non trovata nel database.');
