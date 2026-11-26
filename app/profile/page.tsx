@@ -34,7 +34,7 @@ export default function ProfilePage() {
       if (!publicKey) { setPushEnabled(false); setPushStatus('Configurazione push incompleta: manca la chiave VAPID pubblica. Il permesso del browser da solo non salva le notifiche.'); return; }
       const registration = await navigator.serviceWorker.register('/sw.js');
       const readyRegistration = await navigator.serviceWorker.ready;
-      const subscription = await readyRegistration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) });
+      const subscription = await readyRegistration.pushManager.getSubscription() || await readyRegistration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) });
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
       if (sessionError || !token) { setPushStatus('Push creata sul dispositivo, ma serve un account COURTLY autenticato per salvarla sul server.'); return; }
@@ -47,10 +47,14 @@ export default function ProfilePage() {
   async function sendTestPush() {
     if (!pushEnabled) return;
     try {
-      const registration = await navigator.serviceWorker.ready;
-      await registration.showNotification('COURTLY · Test', { body: 'Le notifiche sul dispositivo sono attive! 🏀', icon: '/courtly-icon.svg', data: { url: '/notifications' } });
-      setPushStatus('Notifica di test inviata.');
-    } catch { setPushStatus('Impossibile mostrare la notifica di test.'); }
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) { setPushStatus('Sessione scaduta: accedi di nuovo per inviare la prova.'); return; }
+      const response = await fetch('/api/push/test', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+      const result = await response.json();
+      if (!response.ok || !result.sent) { setPushStatus('Push remota non ricevuta dal servizio. Controlla registrazione e configurazione.'); return; }
+      setPushStatus('Notifica push remota inviata al dispositivo.');
+    } catch { setPushStatus('Invio della notifica push di prova non riuscito.'); }
   }
 
 
