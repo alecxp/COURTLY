@@ -52,7 +52,8 @@ export default function TeamsPage() {
           const sharedTeam = payload.team;
           const members: Member[] = (payload.members || []).map((row: any) => {
             const memberNickname = row.nickname || 'Membro';
-            const localPosition = memberNickname.trim().toLowerCase() === enteredNickname.toLowerCase() ? savedPosition : '';
+            const savedDbPosition = row.position || '';
+            const localPosition = memberNickname.trim().toLowerCase() === enteredNickname.toLowerCase() ? (savedDbPosition || savedPosition) : savedDbPosition;
             return { id: row.id, nickname: memberNickname, role: (row.role === 'coach' || row.role === 'admin' ? 'Coach' : 'Player') as Member['role'], position: localPosition || undefined, isFirstYear: !!row.is_first_year };
           });
           // Persist the canonical server profile so the selected role/nickname remain consistent on later visits.
