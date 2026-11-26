@@ -44,13 +44,9 @@ export default function TeamsPage() {
           if (ownProfile?.nickname) setCurrentNickname(ownProfile.nickname);
           if (ownProfile?.role) setIsCoach(ownProfile.role === 'coach');
           // Use the authenticated server endpoint to bypass client-side RLS inconsistencies for roster reads.
-          // Refresh the anonymous Supabase session before calling the server roster endpoint.
-          // getSession alone may return an expired access token, causing "Invalid session".
-          const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError) throw new Error('Sessione Supabase scaduta. Rientra in COURTLY.');
-          const accessToken = refreshed.session?.access_token;
-          if (!accessToken) throw new Error('Sessione Supabase non disponibile. Rientra in COURTLY.');
-          const response = await fetch('/api/roster', { headers: { Authorization: `Bearer ${accessToken}` }, cache: 'no-store' });
+          // Roster endpoint uses the signed COURTLY access cookie and server-side DB credentials.
+          // Supabase anonymous session refresh is not required to read the shared roster.
+          const response = await fetch('/api/roster', { cache: 'no-store' });
           const payload = await response.json();
           if (!response.ok) throw new Error(payload.error || 'Roster non disponibile.');
           const sharedTeam = payload.team;
