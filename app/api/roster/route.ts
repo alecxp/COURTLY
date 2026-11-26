@@ -33,5 +33,12 @@ export async function GET(req: Request) {
   const { data: profiles, error: profilesError } = ids.length ? await admin.from('profiles').select('id,nickname,role,team_id').in('id', ids) : { data: [], error: null };
   if (profilesError) return NextResponse.json({ error: profilesError.message }, { status: 500 });
   const map = new Map((profiles || []).map(p => [p.id, p]));
-  return NextResponse.json({ team, members: (memberships || []).map(m => ({ id:m.id, nickname: map.get(m.user_id)?.nickname || 'Membro', role: m.role, is_first_year: !!m.is_first_year })) });
+  // Display each nickname only once (case-insensitive); preserve the earliest membership as canonical.
+  const uniqueMembers = new Map<string, any>();
+  for (const m of memberships || []) {
+    const nickname = (map.get(m.user_id)?.nickname || 'Membro').trim() || 'Membro';
+    const key = nickname.toLocaleLowerCase();
+    if (!uniqueMembers.has(key)) uniqueMembers.set(key, { id: m.id, nickname, role: m.role, is_first_year: !!m.is_first_year });
+  }
+  return NextResponse.json({ team, members: [...uniqueMembers.values()] }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
 }
