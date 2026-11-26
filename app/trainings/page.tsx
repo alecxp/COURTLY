@@ -14,7 +14,8 @@ export default function TrainingsPage() {
   const [trainings, setTrainings] = useState<Training[]>(initial);
   const [selected, setSelected] = useState('');
   const [isCoach, setIsCoach] = useState(false);
-  const [showCreate, setShowCreate] = useState(false);\n  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ title: '', date: '', time: '19:30', location: '', note: '', deadline: '' });
   const [nickname, setNickname] = useState('Giocatore');
   const [players, setPlayers] = useState<string[]>([]);
