@@ -43,28 +43,21 @@ export default function TeamsPage() {
           localStorage.setItem('courtly_shared_team_id', teamId);
           if (ownProfile?.nickname) setCurrentNickname(ownProfile.nickname);
           if (ownProfile?.role) setIsCoach(ownProfile.role === 'coach');
-          const { data: sharedTeam, error: teamError } = await supabase.from('teams').select('id,name,category,season').eq('id', teamId).maybeSingle();
-          if (teamError) throw teamError;
-          if (!sharedTeam) throw new Error('Squadra non trovata nel database.');
-          // Query memberships and profiles separately to avoid relying on an implicit FK relationship.
-          const { data: roster, error: rosterError } = await supabase.from('team_members').select('id,user_id,role,is_first_year').eq('team_id', teamId);
-          if (rosterError) throw rosterError;
-          const userIds = Array.from(new Set((roster || []).map((row: any) => row.user_id).filter(Boolean)));
-          const { data: profiles, error: profilesError } = userIds.length
-            ? await supabase.from('profiles').select('id,nickname,role,team_id').in('id', userIds)
-            : { data: [], error: null };
-          // Memberships are the source of truth for roster counts. Profile RLS may hide nicknames,
-          // but it must not make the whole roster disappear.
-          if (profilesError) console.warn('Roster profiles unavailable:', profilesError.message);
-          const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
-          const members: Member[] = (roster || []).map((row: any) => {
-            const profile = profileById.get(row.user_id);
-            const memberNickname = profile?.nickname || (row.user_id === userId ? ownProfile?.nickname : '') || 'Membro';
-            // Position is currently stored locally for this device; display it for the current user even in online roster mode.
+          // Use the authenticated server endpoint to bypass client-side RLS inconsistencies for roster reads.
+          const { data: sessionNow } = await supabase.auth.getSession();
+          const accessToken = sessionNow.session?.access_token;
+          if (!accessToken) throw new Error('Sessione scaduta. Accedi di nuovo.');
+          const response = await fetch('/api/roster', { headers: { Authorization: `Bearer ${accessToken} }, cache: 'no-store' });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error || 'Roster non disponibile.');
+          const sharedTeam = payload.team;
+          const members: Member[] = (payload.members || []).map((row: any) => {
+            const memberNickname = row.nickname || 'Membro';
             const localPosition = memberNickname.trim().toLowerCase() === enteredNickname.toLowerCase() ? savedPosition : '';
             return { id: row.id, nickname: memberNickname, role: (row.role === 'coach' || row.role === 'admin' ? 'Coach' : 'Player') as Member['role'], position: localPosition || undefined, isFirstYear: !!row.is_first_year };
           });
           setTeam({ name: sharedTeam.name, category: sharedTeam.category || '', season: sharedTeam.season || '2026/27', members });
+
         } catch (err) {
           setTeam(seed);
           setNotice(err instanceof Error ? `Roster condiviso non disponibile: ${err.message}` : 'Roster condiviso non disponibile.');
