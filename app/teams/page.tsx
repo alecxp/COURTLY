@@ -55,6 +55,14 @@ export default function TeamsPage() {
             const localPosition = memberNickname.trim().toLowerCase() === enteredNickname.toLowerCase() ? savedPosition : '';
             return { id: row.id, nickname: memberNickname, role: (row.role === 'coach' || row.role === 'admin' ? 'Coach' : 'Player') as Member['role'], position: localPosition || undefined, isFirstYear: !!row.is_first_year };
           });
+          // Persist the canonical server profile so the selected role/nickname remain consistent on later visits.
+          const currentMember = members.find(m => m.nickname.trim().toLowerCase() === enteredNickname.trim().toLowerCase());
+          if (currentMember) {
+            localStorage.setItem('courtly_demo_nickname', currentMember.nickname);
+            localStorage.setItem('courtly_demo_role', currentMember.role === 'Coach' ? 'coach' : 'player');
+            setCurrentNickname(currentMember.nickname);
+            setIsCoach(currentMember.role === 'Coach');
+          }
           setTeam({ name: sharedTeam.name, category: sharedTeam.category || '', season: sharedTeam.season || '2026/27', members });
 
         } catch (err) {
