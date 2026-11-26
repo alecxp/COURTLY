@@ -20,18 +20,12 @@ export async function GET(req: Request) {
   const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const secret = process.env.ACCESS_SESSION_SECRET;
   if (!url || !anon || !service || !secret) return NextResponse.json({ error: 'Server configuration incomplete.' }, { status: 503 });
-  const token = req.headers.get('authorization')?.replace(/^Bearer /, '');
-  if (!token) return NextResponse.json({ error: 'Session missing.' }, { status: 401 });
   const cookie = req.headers.get('cookie')?.split(';').map(s => s.trim()).find(s => s.startsWith('courtly_access='));
   const access = cookie ? verify(decodeURIComponent(cookie.slice('courtly_access='.length)), secret) : null;
   if (!access) return NextResponse.json({ error: 'Access expired.' }, { status: 401 });
-  const authClient = createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data: auth, error: authError } = await authClient.auth.getUser(token);
-  if (authError || !auth.user) return NextResponse.json({ error: 'Invalid session.' }, { status: 401 });
   const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data: profile, error: profileError } = await admin.from('profiles').select('id,nickname,role,team_id').eq('id', auth.user.id).maybeSingle();
-  if (profileError || !profile?.team_id) return NextResponse.json({ error: profileError?.message || 'Profile/team missing.' }, { status: 404 });
-  const { data: team, error: teamError } = await admin.from('teams').select('id,name,category,season').eq('id', profile.team_id).maybeSingle();
+  const TEAM_ID = 'bd012338-db12-4192-a360-573472a80ad3';
+  const { data: team, error: teamError } = await admin.from('teams').select('id,name,category,season').eq('id', TEAM_ID).maybeSingle();
   if (teamError || !team) return NextResponse.json({ error: teamError?.message || 'Team not found.' }, { status: 404 });
   const { data: memberships, error: rosterError } = await admin.from('team_members').select('id,user_id,role,is_first_year').eq('team_id', team.id);
   if (rosterError) return NextResponse.json({ error: rosterError.message }, { status: 500 });
@@ -39,5 +33,5 @@ export async function GET(req: Request) {
   const { data: profiles, error: profilesError } = ids.length ? await admin.from('profiles').select('id,nickname,role,team_id').in('id', ids) : { data: [], error: null };
   if (profilesError) return NextResponse.json({ error: profilesError.message }, { status: 500 });
   const map = new Map((profiles || []).map(p => [p.id, p]));
-  return NextResponse.json({ team, members: (memberships || []).map(m => ({ id:m.id, nickname: map.get(m.user_id)?.nickname || (m.user_id === auth.user.id ? profile.nickname : 'Membro'), role: m.role, is_first_year: !!m.is_first_year })) });
+  return NextResponse.json({ team, members: (memberships || []).map(m => ({ id:m.id, nickname: map.get(m.user_id)?.nickname || 'Membro', role: m.role, is_first_year: !!m.is_first_year })) });
 }
