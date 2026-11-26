@@ -60,6 +60,26 @@ export default function ProfilePage() {
       setTeamName(localStorage.getItem('courtly_demo_team_name') || '');
       setRole(localStorage.getItem('courtly_demo_role') === 'coach' ? 'Coach' : 'Giocatore');
       setTeamRole(localStorage.getItem('courtly_demo_team_role') || '');
+      if (isSupabaseConfigured) {
+        void (async () => {
+          const { data: sessionData } = await supabase.auth.getSession();
+          const userId = sessionData.session?.user.id;
+          if (!userId) return;
+          const { data: profile } = await supabase.from('profiles').select('nickname,team_id,role,playing_position').eq('id', userId).maybeSingle();
+          if (profile) {
+            if (profile.nickname) setNickname(profile.nickname);
+            if (profile.team_id) {
+              const { data: team } = await supabase.from('teams').select('name').eq('id', profile.team_id).maybeSingle();
+              if (team?.name) setTeamName(team.name);
+            }
+            if (profile.role) setRole(profile.role === 'coach' ? 'Coach' : 'Giocatore');
+            if (profile.playing_position) {
+              setTeamRole(profile.playing_position);
+              localStorage.setItem('courtly_demo_team_role', profile.playing_position);
+            }
+          }
+        })();
+      }
     } catch {
       setNotice('Non è stato possibile leggere il profilo da questo dispositivo.');
     } finally {
@@ -77,7 +97,7 @@ export default function ProfilePage() {
       if (sessionError) { setNotice(sessionError.message); return; }
       const userId = sessionData.session?.user.id;
       if (userId) {
-        const { error } = await supabase.from('profiles').update({ nickname: cleanNickname }).eq('id', userId);
+        const { error } = await supabase.from('profiles').update({ nickname: cleanNickname, playing_position: teamRole.trim() || null }).eq('id', userId);
         if (error) { setNotice(error.message); return; }
       }
     }
@@ -110,7 +130,7 @@ export default function ProfilePage() {
     setNickname(cleanNickname);
     setTeamName(cleanTeam);
     setTeamRole(teamRole.trim());
-    setNotice('Profilo aggiornato.');
+    setNotice(isSupabaseConfigured ? 'Profilo e ruolo in campo salvati nel database.' : 'Profilo aggiornato in questa demo locale.');
   }
 
   if (loading) return <main className="auth-wrap"><p>Caricamento profilo…</p></main>;
