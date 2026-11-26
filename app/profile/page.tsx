@@ -17,8 +17,8 @@ export default function ProfilePage() {
       setPushStatus('Notifiche non supportate da questo browser.');
       return;
     }
-    setPushEnabled(Notification.permission === 'granted');
-    setPushStatus(Notification.permission === 'granted' ? 'Notifiche consentite su questo dispositivo.' : Notification.permission === 'denied' ? 'Permesso notifiche bloccato dal browser.' : 'Notifiche non ancora attivate.');
+    setPushEnabled(false);
+    setPushStatus(Notification.permission === 'granted' ? 'Permesso browser concesso, ma la registrazione COURTLY non è ancora verificata. Premi Attiva notifiche.' : Notification.permission === 'denied' ? 'Permesso notifiche bloccato dal browser.' : 'Notifiche non ancora attivate.');
   }, []);
   function urlBase64ToUint8Array(base64: string) {
     const padding = '='.repeat((4 - base64.length % 4) % 4);
@@ -31,7 +31,7 @@ export default function ProfilePage() {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') { setPushStatus(permission === 'denied' ? 'Permesso negato: abilitalo nelle impostazioni del browser.' : 'Attivazione annullata.'); return; }
       const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-      if (!publicKey) { setPushStatus('Configurazione push incompleta: manca la chiave VAPID pubblica.'); return; }
+      if (!publicKey) { setPushEnabled(false); setPushStatus('Configurazione push incompleta: manca la chiave VAPID pubblica. Il permesso del browser da solo non salva le notifiche.'); return; }
       const registration = await navigator.serviceWorker.register('/sw.js');
       const readyRegistration = await navigator.serviceWorker.ready;
       const subscription = await readyRegistration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) });
@@ -39,7 +39,7 @@ export default function ProfilePage() {
       const token = sessionData.session?.access_token;
       if (sessionError || !token) { setPushStatus('Push creata sul dispositivo, ma serve un account COURTLY autenticato per salvarla sul server.'); return; }
       const response = await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ subscription }) });
-      if (!response.ok) { setPushStatus('Sottoscrizione push non salvata sul server.'); return; }
+      if (!response.ok) { setPushEnabled(false); setPushStatus('Sottoscrizione push non salvata sul server.'); return; }
       setPushEnabled(true);
       setPushStatus('Push attive e dispositivo registrato sul server.');
     } catch { setPushStatus('Attivazione push non riuscita. Verifica browser e configurazione VAPID.'); }
@@ -96,10 +96,10 @@ export default function ProfilePage() {
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) { setNotice(sessionError.message); return; }
       const userId = sessionData.session?.user.id;
-      if (userId) {
-        const { error } = await supabase.from('profiles').update({ nickname: cleanNickname, playing_position: teamRole.trim() || null }).eq('id', userId);
-        if (error) { setNotice(error.message); return; }
-      }
+      if (!userId) { setNotice('Sessione non autenticata: accedi nuovamente per salvare il ruolo in campo nel database.'); return; }
+      const { data: savedProfile, error } = await supabase.from('profiles').update({ nickname: cleanNickname, playing_position: teamRole.trim() || null }).eq('id', userId).select('id,playing_position').maybeSingle();
+      if (error) { setNotice(`Errore salvataggio profilo: ${error.message}`); return; }
+      if (!savedProfile || savedProfile.playing_position !== (teamRole.trim() || null)) { setNotice('Il database non ha confermato il salvataggio del ruolo. Riprova.'); return; }
     }
     try {
       localStorage.setItem('courtly_demo_nickname', cleanNickname);
@@ -151,12 +151,6 @@ export default function ProfilePage() {
       <button className="btn-primary" type="submit">Salva profilo</button>
     </form>
     {notice && <div className="auth-message" role="status">{notice}</div>}
-    <section className="profile-position-card" style={{marginTop:18}}>
-      <div className="profile-position-heading"><span className="profile-position-icon">🔔</span><div><strong>NOTIFICHE COURTLY</strong><small>Avvisi su questo dispositivo</small></div></div>
-      <p className="profile-position-note">{pushStatus}</p>
-      <button type="button" className="btn-primary" onClick={enablePush} disabled={pushEnabled}>{pushEnabled ? 'Notifiche attive' : 'Attiva notifiche'}</button>
-      {pushEnabled && <button type="button" className="btn-primary" style={{marginTop:10}} onClick={sendTestPush}>Invia notifica di prova</button>}
-    </section>
     <p className="auth-switch"><Link href="/dashboard">Torna alla dashboard</Link></p>
   </div></main>;
 }
