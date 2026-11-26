@@ -47,7 +47,7 @@ export default function TeamsPage() {
           const { data: sessionNow } = await supabase.auth.getSession();
           const accessToken = sessionNow.session?.access_token;
           if (!accessToken) throw new Error('Sessione scaduta. Accedi di nuovo.');
-          const response = await fetch('/api/roster', { headers: { Authorization: `Bearer ${accessToken} }, cache: 'no-store' });
+          const response = await fetch('/api/roster', { headers: { Authorization: `Bearer ${accessToken}` }, cache: 'no-store' });
           const payload = await response.json();
           if (!response.ok) throw new Error(payload.error || 'Roster non disponibile.');
           const sharedTeam = payload.team;
