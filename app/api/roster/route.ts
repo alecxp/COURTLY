@@ -30,7 +30,7 @@ export async function GET(req: Request) {
   const { data: memberships, error: rosterError } = await admin.from('team_members').select('id,user_id,role,is_first_year').eq('team_id', team.id);
   if (rosterError) return NextResponse.json({ error: rosterError.message }, { status: 500 });
   const ids = [...new Set((memberships || []).map(m => m.user_id).filter(Boolean))];
-  const { data: profiles, error: profilesError } = ids.length ? await admin.from('profiles').select('id,nickname,role,team_id').in('id', ids) : { data: [], error: null };
+  const { data: profiles, error: profilesError } = ids.length ? await admin.from('profiles').select('id,nickname,role,team_id,playing_position').in('id', ids) : { data: [], error: null };
   if (profilesError) return NextResponse.json({ error: profilesError.message }, { status: 500 });
   const map = new Map((profiles || []).map(p => [p.id, p]));
   // Display each nickname only once (case-insensitive); preserve the earliest membership as canonical.
