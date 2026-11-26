@@ -53,11 +53,13 @@ export default function TeamsPage() {
           const { data: profiles, error: profilesError } = userIds.length
             ? await supabase.from('profiles').select('id,nickname,role,team_id').in('id', userIds)
             : { data: [], error: null };
-          if (profilesError) throw profilesError;
+          // Memberships are the source of truth for roster counts. Profile RLS may hide nicknames,
+          // but it must not make the whole roster disappear.
+          if (profilesError) console.warn('Roster profiles unavailable:', profilesError.message);
           const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
           const members: Member[] = (roster || []).map((row: any) => {
             const profile = profileById.get(row.user_id);
-            const memberNickname = profile?.nickname || 'Utente';
+            const memberNickname = profile?.nickname || (row.user_id === userId ? ownProfile?.nickname : '') || 'Membro';
             // Position is currently stored locally for this device; display it for the current user even in online roster mode.
             const localPosition = memberNickname.trim().toLowerCase() === enteredNickname.toLowerCase() ? savedPosition : '';
             return { id: row.id, nickname: memberNickname, role: (row.role === 'coach' || row.role === 'admin' ? 'Coach' : 'Player') as Member['role'], position: localPosition || undefined, isFirstYear: !!row.is_first_year };
