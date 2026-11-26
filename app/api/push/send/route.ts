@@ -5,7 +5,7 @@ import webpush from 'web-push';
 type PushPayload = { title?: string; body?: string; url?: string };
 export async function POST(req: Request) {
   try {
-    const token = req.headers.get('authorization')?.replace(/^Bearer\\s+/i, '');
+    const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
