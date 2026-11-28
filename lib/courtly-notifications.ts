@@ -43,6 +43,18 @@ export async function addSharedTeamNotification(input: Omit<CourtlyNotification,
     const rows = recipients.map(user_id => ({ team_id: ctx.teamId, user_id, category: input.category, title: input.title, body: input.body, href: input.href }));
     const { error } = await ctx.supabase.from('team_notifications').insert(rows);
     if (error) throw error;
+    // Best-effort remote push after persistent in-app notifications succeed.
+    const { data: sessionData } = await ctx.supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (token) {
+      try {
+        await fetch('/api/push/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ title: input.title, body: input.body, url: input.href, recipientIds: recipients }),
+        });
+      } catch { /* in-app notification remains saved even if push delivery is unavailable */ }
+    }
     return true;
   } catch {
     return false;
