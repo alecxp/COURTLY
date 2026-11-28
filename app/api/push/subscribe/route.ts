@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     const { data: profile, error: profileError } = await admin.from('profiles').select('team_id').eq('id', auth.user.id).maybeSingle();
     if (profileError) return NextResponse.json({ error: 'Could not load team profile' }, { status: 500 });
     const { data: existing, error: existingError } = await admin.from('push_subscriptions').select('user_id').eq('endpoint', subscription.endpoint).maybeSingle();
-    if (existingError) return NextResponse.json({ error: 'Could not check existing subscription' }, { status: 500 });
+    if (existingError) return NextResponse.json({ error: 'Could not check existing subscription', detail: existingError.message }, { status: 500 });
     if (existing && existing.user_id !== auth.user.id) return NextResponse.json({ error: 'This device subscription is already linked to another account. Unsubscribe and retry.' }, { status: 409 });
     const row = {
       user_id: auth.user.id,
