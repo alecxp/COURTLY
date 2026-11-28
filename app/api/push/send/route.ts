@@ -20,9 +20,14 @@ export async function POST(req: Request) {
     const { data: profile, error: profileError } = await userClient.from('profiles').select('role,team_id').eq('id', userData.user.id).single();
     if (profileError || profile?.role !== 'coach' || !profile.team_id) return NextResponse.json({ error: 'Coach access required' }, { status: 403 });
     const body = await req.json() as PushPayload & { recipientIds?: string[] };
-    if (!body.title?.trim() || !body.body?.trim() || !Array.isArray(body.recipientIds) || body.recipientIds.length === 0) return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    if (!body.title?.trim() || !body.body?.trim() || !Array.isArray(body.recipientIds) || body.recipientIds.length === 0 || body.recipientIds.length > 200 || body.recipientIds.some((id) => typeof id !== 'string')) return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     const admin = createClient(url, serviceKey);
-    const { data: subscriptions, error } = await admin.from('push_subscriptions').select('user_id,endpoint,p256dh_key,auth_key').eq('team_id', profile.team_id).in('user_id', body.recipientIds);
+    const requestedIds = [...new Set(body.recipientIds)];
+    const { data: members, error: memberError } = await admin.from('team_members').select('user_id').eq('team_id', profile.team_id).in('user_id', requestedIds);
+    if (memberError) return NextResponse.json({ error: 'Could not validate recipients' }, { status: 500 });
+    const verifiedRecipients = [...new Set((members || []).map((m: { user_id: string }) => m.user_id))];
+    if (!verifiedRecipients.length) return NextResponse.json({ sent: 0, failed: 0 });
+    const { data: subscriptions, error } = await admin.from('push_subscriptions').select('user_id,endpoint,p256dh_key,auth_key').eq('team_id', profile.team_id).in('user_id', verifiedRecipients);
     if (error) return NextResponse.json({ error: 'Could not load push targets' }, { status: 500 });
     webpush.setVapidDetails(subject, publicKey, privateKey);
     const payload = JSON.stringify({ title: body.title, body: body.body, url: body.url || '/notifications' });
