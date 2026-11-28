@@ -8,7 +8,7 @@ function getSupabaseForToken(token: string) {
   return createClient(url, key, { global: { headers: { Authorization: `Bearer ${token}` } } });
 }
 async function getUser(req: Request) {
-  const token = req.headers.get('authorization')?.replace(/^Bearer\\s+/i, '');
+  const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
   if (!token) return null;
   const client = getSupabaseForToken(token);
   const { data, error } = await client.auth.getUser(token);
