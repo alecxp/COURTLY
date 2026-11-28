@@ -39,7 +39,7 @@ export default function ProfilePage() {
       const token = sessionData.session?.access_token;
       if (sessionError || !token) { setPushStatus('Push creata sul dispositivo, ma serve un account COURTLY autenticato per salvarla sul server.'); return; }
       const response = await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ subscription }) });
-      if (!response.ok) { setPushEnabled(false); setPushStatus('Sottoscrizione push non salvata sul server.'); return; }
+      if (!response.ok) { const result = await response.json().catch(() => ({})); setPushEnabled(false); setPushStatus(`Server push (${response.status}): ${result.detail || result.error || 'registrazione non riuscita'}`); return; }
       setPushEnabled(true);
       setPushStatus('Push attive e dispositivo registrato sul server.');
     } catch { setPushStatus('Attivazione push non riuscita. Verifica browser e configurazione VAPID.'); }
